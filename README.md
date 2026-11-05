@@ -257,6 +257,10 @@ Review [site settings](sitesetting.yml),
 [table permissions](table-permissions/), and [web roles](webrole.yml) before
 deploying to another environment.
 
+The shared page header uses the local `generic-logo.png` web file. Customize
+the `Logo URL` and `Logo alt text` content snippets to change its image and
+accessible description.
+
 - `HIPP/ContentUnderstandingFlowId` identifies the PDF scanning flow. Align it
   with the target environment's cloud flow consumer registration.
 - `Webapi/cr417_hipprecords/enabled` and its `/fields` setting control record API
