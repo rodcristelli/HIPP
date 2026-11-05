@@ -7,7 +7,7 @@
     <div name='webChat'></div>
     <script type='text/javascript' id='pvaChatInlineScript'>
         var script = document.createElement('script');
-        script.onload = function() {
+        script.onload = /* Renders the chat using the bot configuration after the embedded library loads. */ function() {
             var botConfig = {{botConfig}};
 
         // Learn more about advanced configuration: https://go.microsoft.com/fwlink/?linkid=2147420

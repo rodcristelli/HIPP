@@ -1,7 +1,8 @@
-/* The CSV is deployed as a web file at the path below. Keep the source outside
-	 the page copy so its row order remains the single source of truth. */
-(function () {
+/* Field definitions are loaded from the JSON web file. Keep them outside the
+	 page copy so their order remains the single source of truth. */
+(/* Initializes the form once the document is ready. */ function () {
 	"use strict";
+	/* Configures fields, validation, PDF scanning, and form submission. */
 	function boot() {
 
 	var definitionsUrl = "/hipp-field-definitions.json";
@@ -24,13 +25,14 @@
 	var pendingScannedPdf = null;
 	var scanBusy = false;
 	var maxPdfBytes = 10 * 1024 * 1024;
-	var refreshVisibility = function () {};
+	var refreshVisibility = /* Reserves the visibility update callback until fields are rendered. */ function () {};
 
 	if (!form || !fieldsContainer) {
 		return;
 	}
 	submitButton.disabled = true;
 
+	/* Splits CSV into rows while respecting quotes, commas, and line breaks. */
 	function csvRows(text) {
 		var rows = [];
 		var row = [];
@@ -53,7 +55,7 @@
 					index += 1;
 				}
 				row.push(value);
-				if (row.some(function (cell) { return cell.trim() !== ""; })) {
+				if (row.some(/* Detects nonempty cells so blank rows can be discarded. */ function (cell) { return cell.trim() !== ""; })) {
 					rows.push(row);
 				}
 				row = [];
@@ -69,12 +71,13 @@
 		return rows;
 	}
 
+	/* Converts CSV dictionary rows into form field definitions. */
 	function parseCsv(text) {
 		var rows = csvRows(text);
-		var header = rows.shift().map(function (name) { return name.trim(); });
+		var header = rows.shift().map(/* Trims whitespace from column names. */ function (name) { return name.trim(); });
 		var index = {};
-		header.forEach(function (name, position) { index[name] = position; });
-		return rows.map(function (row) {
+		header.forEach(/* Indexes each header column by its position. */ function (name, position) { index[name] = position; });
+		return rows.map(/* Extracts field metadata and rules from a CSV row. */ function (row) {
 			return {
 				name: (row[index["Variable / Field Name"]] || "").trim(),
 				section: (row[index["Section Header"]] || "").trim(),
@@ -89,25 +92,29 @@
 				annotation: (row[index["Field Annotation"]] || "").trim(),
 				required: (row[index["Required Field?"]] || "").trim().toLowerCase() === "y"
 			};
-		}).filter(function (field) { return field.name && field.label; });
+		}).filter(/* Keeps only fields with both a name and a label. */ function (field) { return field.name && field.label; });
 	}
 
+	/* Converts the choices string into valid value and label pairs. */
 	function choices(value) {
-		return value.split("|").map(function (choice) {
+		return value.split("|").map(/* Separates a choice code from its display label. */ function (choice) {
 			var parts = choice.split(/,\s*/);
 			return { value: (parts.shift() || "").trim(), label: parts.join(", ").trim() };
-		}).filter(function (choice) { return choice.value && choice.label; });
+		}).filter(/* Discards choices without a code or label. */ function (choice) { return choice.value && choice.label; });
 	}
 
+	/* Generates a safe HTML identifier from the field name. */
 	function safeId(name) {
 		return "hipp-" + name.replace(/[^a-zA-Z0-9_-]/g, "-");
 	}
 
+	/* Reads the default value declared by the field's @DEFAULT annotation. */
 	function annotationDefault(field) {
 		var match = (field.annotation || "").match(/@DEFAULT="([^"]*)"/);
 		return match ? match[1] : null;
 	}
 
+	/* Selects validation feedback based on the field type and limits. */
 	function validationMessage(field) {
 		if (field.validation === "date_mdy") {
 			return "Enter a valid date" + (field.min || field.max ? " within the allowed date range" : "") + ".";
@@ -121,6 +128,7 @@
 		return "Enter a valid value.";
 	}
 
+	/* Applies the input type, step, and validation limits to an HTML control. */
 	function addValidationAttributes(control, field) {
 		if (field.validation === "number") {
 			control.type = "number";
@@ -135,18 +143,21 @@
 		if (field.max !== "") control.max = field.max;
 	}
 
+	/* Shows or hides form feedback and applies its error or success style. */
 	function setStatus(message, isError) {
 		status.hidden = !message;
 		status.textContent = message;
 		status.className = "hipp-form-status" + (isError ? " is-error" : " is-success");
 	}
 
+	/* Updates upload progress or hides the bar when the percentage is null. */
 	function setProgress(percent) {
 		if (!progressContainer || !progressBar) return;
 		progressContainer.hidden = percent === null;
 		progressBar.style.width = (percent === null ? 0 : percent) + "%";
 	}
 
+	/* Updates the PDF scanner's message and visual status. */
 	function setScanStatus(message, isError) {
 		if (!scanStatus) return;
 		scanStatus.hidden = !message;
@@ -154,6 +165,7 @@
 		scanStatus.className = "hipp-form-status" + (isError ? " is-error" : " is-success");
 	}
 
+	/* Synchronizes controls, progress, and accessibility while a PDF is being scanned. */
 	function setScanBusy(isBusy) {
 		scanBusy = isBusy;
 		if (scanner) scanner.setAttribute("aria-busy", isBusy ? "true" : "false");
@@ -167,6 +179,7 @@
 		updateSubmitState();
 	}
 
+	/* Creates a field control with its label, choices, annotations, and validation rules. */
 	function createControl(field) {
 		var id = safeId(field.name);
 		var wrapper = document.createElement("div");
@@ -195,7 +208,7 @@
 		if (field.type === "radio" || field.type === "checkbox") {
 			control = document.createElement("div");
 			control.className = "hipp-options";
-			choices(field.choices).forEach(function (choice, choiceIndex) {
+			choices(field.choices).forEach(/* Creates a radio or checkbox option with an identifier and label. */ function (choice, choiceIndex) {
 				var optionId = id + "-" + choiceIndex;
 				var optionLabel = document.createElement("label");
 				optionLabel.htmlFor = optionId;
@@ -250,10 +263,10 @@
 		var inputs = field.type === "radio" || field.type === "checkbox"
 			? Array.from(control.querySelectorAll("input"))
 			: [control];
-		inputs.forEach(function (input) {
-			input.addEventListener("input", function () {
+		inputs.forEach(/* Attaches validation feedback updates to each control. */ function (input) {
+			input.addEventListener("input", /* Updates the validation error based on the input value or selected choices. */ function () {
 				if (field.type === "radio" || field.type === "checkbox") {
-					validationError.hidden = inputs.some(function (option) { return option.checked; });
+					validationError.hidden = inputs.some(/* Checks whether any option in the group is selected. */ function (option) { return option.checked; });
 				} else {
 					validationError.hidden = input.validity.valid || !input.value;
 				}
@@ -272,6 +285,7 @@
 		return wrapper;
 	}
 
+	/* Compares values using text equality or numeric inequality. */
 	function compare(left, operator, right) {
 		if (operator === "=") return String(left) === right.replace(/^['"]|['"]$/g, "");
 		if (operator === ">") return Number(left) > Number(right);
@@ -279,26 +293,30 @@
 		return false;
 	}
 
+	/* Returns the enabled controls associated with a field. */
 	function getFieldControls(name) {
 		return getAllFieldControls(name)
-			.filter(function (input) { return !input.disabled; });
+			.filter(/* Excludes disabled controls when reading a field. */ function (input) { return !input.disabled; });
 	}
 
+	/* Finds all controls associated with a field name, including disabled controls. */
 	function getAllFieldControls(name) {
 		return Array.from(form.querySelectorAll('input[data-field-name="' + name + '"], select[data-field-name="' + name + '"], textarea[data-field-name="' + name + '"]'));
 	}
 
+	/* Reads a field value or its selected choices according to the control type. */
 	function getValue(name) {
 		var controls = getFieldControls(name);
 		if (!controls.length) return "";
-		if (controls[0].type === "checkbox") return controls.filter(function (input) { return input.checked; }).map(function (input) { return input.value; });
+		if (controls[0].type === "checkbox") return controls.filter(/* Keeps only selected checkboxes. */ function (input) { return input.checked; }).map(/* Extracts the value of each selected checkbox. */ function (input) { return input.value; });
 		if (controls[0].type === "radio") {
-			var selected = controls.find(function (input) { return input.checked; });
+			var selected = controls.find(/* Finds the selected radio option. */ function (input) { return input.checked; });
 			return selected ? selected.value : "";
 		}
 		return controls[0].value;
 	}
 
+	/* Removes only outer parentheses that enclose the entire expression. */
 	function stripOuterParentheses(expression) {
 		var value = expression.trim();
 		while (value[0] === "(" && value[value.length - 1] === ")") {
@@ -318,6 +336,7 @@
 		return value;
 	}
 
+	/* Splits an expression by an operator without splitting parenthesized sections. */
 	function splitTopLevel(expression, operator) {
 		var parts = [];
 		var start = 0;
@@ -336,6 +355,7 @@
 		return parts;
 	}
 
+	/* Evaluates a visibility condition using the referenced field's current value. */
 	function evaluateCondition(condition) {
 		var match = condition.trim().match(/^\[([^\]]+)\]\s*(=|>|<)\s*(['"]?)(.*?)\3$/);
 		if (!match) return false;
@@ -349,6 +369,7 @@
 		return compare(Array.isArray(value) ? value.join(",") : value, match[2], match[4]);
 	}
 
+	/* Recursively evaluates branching rules with and and or operators. */
 	function evaluateBranching(expression) {
 		var value = stripOuterParentheses(expression);
 		var orParts = splitTopLevel(value, "or");
@@ -358,14 +379,16 @@
 		return evaluateCondition(value);
 	}
 
+	/* Determines whether a field should be shown according to its branching rule. */
 	function visible(field) {
 		return !field.branching || evaluateBranching(field.branching);
 	}
 
+	/* Builds sections and fields and connects dynamic visibility updates. */
 	function render() {
 		fieldsContainer.replaceChildren();
 		var currentSection = null;
-		definitions.forEach(function (field) {
+		definitions.forEach(/* Creates a section when needed and appends the field control. */ function (field) {
 			if (field.section && (!currentSection || currentSection.dataset.section !== field.section)) {
 				currentSection = document.createElement("fieldset");
 				currentSection.dataset.section = field.section;
@@ -379,8 +402,8 @@
 			}
 			(currentSection || fieldsContainer).appendChild(createControl(field));
 		});
-		refreshVisibility = function () {
-			definitions.forEach(function (field) {
+		refreshVisibility = /* Reevaluates visibility and required controls after form changes. */ function () {
+			definitions.forEach(/* Applies a field's branching rule and hidden annotations. */ function (field) {
 				var node = form.querySelector('[data-field-name="' + field.name + '"]');
 				if (node) {
 					var fieldElement = node.closest(".hipp-field");
@@ -389,7 +412,7 @@
 					var annotationHidden = fieldElement.dataset.annotationHidden === "true";
 					fieldElement.hidden = annotationHidden || !isVisible;
 					var fieldInputs = fieldElement.querySelectorAll("input, select, textarea");
-					fieldInputs.forEach(function (input) {
+					fieldInputs.forEach(/* Updates each control's enabled and required states. */ function (input) {
 						input.disabled = !isVisible && !annotationHidden;
 						if (field.type === "radio") {
 							input.required = isVisible && field.required && input === fieldInputs[0];
@@ -406,41 +429,46 @@
 		refreshVisibility();
 	}
 
+	/* Retrieves the portal verification token for write requests. */
 	function requestToken() {
 		if (window.shell && typeof window.shell.getTokenDeferred === "function") {
-			return new Promise(function (resolve, reject) { window.shell.getTokenDeferred().done(resolve).fail(reject); });
+			return new Promise(/* Forwards the portal token or retrieval failure to the promise. */ function (resolve, reject) { window.shell.getTokenDeferred().done(resolve).fail(reject); });
 		}
 		var token = document.querySelector('input[name="__RequestVerificationToken"]');
 		return Promise.resolve(token ? token.value : "");
 	}
 
+	/* Builds a record name from the person's name and the current ISO timestamp. */
 	function recordName() {
 		var person = [getValue("p_first_name"), getValue("p_last_name")].filter(Boolean).join(" ").trim();
 		return (person || "HIPP Request") + " - " + new Date().toISOString();
 	}
 
+	/* Collects eligible file uploads and the PDF used for automatic prefilling. */
 	function collectFileUploads() {
 		var uploads = [];
-		definitions.forEach(function (field) {
+		definitions.forEach(/* Collects attachments from file fields included in the submission. */ function (field) {
 			if (field.type !== "file") return;
 			var fieldElement = form.querySelector('[data-field-name="' + field.name + '"]');
 			if (!fieldElement || (fieldElement.hidden && fieldElement.dataset.annotationHidden !== "true")) return;
 			var node = getFieldControls(field.name)[0];
-			Array.from((node && node.files) || []).forEach(function (file) { uploads.push({ field: field, file: file }); });
+			Array.from((node && node.files) || []).forEach(/* Associates each uploaded file with its source field. */ function (file) { uploads.push({ field: field, file: file }); });
 		});
 		if (pendingScannedPdf) uploads.push({ field: { label: "Source HIPP PDF" }, file: pendingScannedPdf });
 		return uploads;
 	}
 
+	/* Reads a file and returns its Base64 content without the data URL prefix. */
 	function fileToBase64(file) {
-		return new Promise(function (resolve, reject) {
+		return new Promise(/* Starts asynchronous file reading and registers FileReader result handlers. */ function (resolve, reject) {
 			var reader = new FileReader();
-			reader.onload = function () { resolve(String(reader.result).split(",").pop()); };
-			reader.onerror = function () { reject(reader.error); };
+			reader.onload = /* Returns the Base64 content once file reading completes. */ function () { resolve(String(reader.result).split(",").pop()); };
+			reader.onerror = /* Rejects the promise with the file reading error. */ function () { reject(reader.error); };
 			reader.readAsDataURL(file);
 		});
 	}
 
+	/* Validates the flow configuration and builds its portal trigger URL. */
 	function cloudFlowUrl() {
 		var flowId = scanner ? (scanner.dataset.cloudFlowId || "").trim() : "";
 		if (!flowId) return "";
@@ -449,18 +477,20 @@
 		return "/_api/cloudflow/v1.0/trigger/" + flowId;
 	}
 
+	/* Deserializes up to three JSON layers while the result remains a string. */
 	function parseJsonValue(value) {
 		var parsed = value;
 		for (var count = 0; count < 3 && typeof parsed === "string"; count += 1) parsed = JSON.parse(parsed);
 		return parsed;
 	}
 
+	/* Extracts typed Content Understanding values, including objects and arrays. */
 	function contentUnderstandingValue(field) {
 		if (!field || typeof field !== "object") return field;
 		if (Object.prototype.hasOwnProperty.call(field, "value")) return field.value;
 		if (field.type === "object") {
 			var objectValue = {};
-			Object.keys(field.valueObject || {}).forEach(function (name) {
+			Object.keys(field.valueObject || {}).forEach(/* Recursively converts each property of an extracted object. */ function (name) {
 				objectValue[name] = contentUnderstandingValue(field.valueObject[name]);
 			});
 			return objectValue;
@@ -473,8 +503,9 @@
 		return null;
 	}
 
+	/* Flattens nested fields into entries containing a logical path, value, and confidence. */
 	function flattenContentFields(fields, prefix, entries) {
-		Object.keys(fields || {}).forEach(function (name) {
+		Object.keys(fields || {}).forEach(/* Traverses nested objects or adds a value entry. */ function (name) {
 			var field = fields[name] || {};
 			var path = prefix ? prefix + "." + name : name;
 			if (field.type === "object") {
@@ -490,11 +521,12 @@
 		});
 	}
 
+	/* Extracts the page, center, and horizontal bounds from source geometry. */
 	function layoutGeometry(source) {
 		var match = String(source || "").match(/^D\((\d+),([^)]*)\)/);
 		if (!match) return null;
 		var values = match[2].split(",").map(Number);
-		if (values.length < 8 || values.slice(0, 8).some(function (value) { return !Number.isFinite(value); })) return null;
+		if (values.length < 8 || values.slice(0, 8).some(/* Detects coordinates that are not finite numbers. */ function (value) { return !Number.isFinite(value); })) return null;
 		var xValues = [values[0], values[2], values[4], values[6]];
 		var yValues = [values[1], values[3], values[5], values[7]];
 		return {
@@ -506,8 +538,9 @@
 		};
 	}
 
+	/* Normalizes layout items into text records with page, geometry, and span. */
 	function layoutRecords(items, fallbackPage) {
-		return (items || []).filter(function (item) { return item && item.content; }).map(function (item) {
+		return (items || []).filter(/* Keeps layout items that contain content. */ function (item) { return item && item.content; }).map(/* Normalizes an item's text and extracts its geometry. */ function (item) {
 			var geometry = layoutGeometry(item.source);
 			return {
 				text: String(item.content).replace(/\s+/g, " ").trim(),
@@ -518,9 +551,10 @@
 		});
 	}
 
+	/* Identifies a household member using the last heading before the supplied offset. */
 	function householdNumberAt(offset, records) {
 		var householdNumber = null;
-		(records || []).forEach(function (record) {
+		(records || []).forEach(/* Finds household member headings preceding the text being analyzed. */ function (record) {
 			if (!record.span || record.span.offset > offset) return;
 			var match = normalizedDisplayName(record.text).match(/\b(\d{1,2})(?:st|nd|rd|th)\s+(?:twelfth\s+)?person in household\b/);
 			if (match) householdNumber = Number(match[1]);
@@ -528,35 +562,39 @@
 		return householdNumber;
 	}
 
+	/* Matches fields by label and limits results to the identified household member. */
 	function layoutFieldMatches(label, householdNumber) {
 		var normalizedLabel = normalizedDisplayName(label);
-		var matches = definitions.filter(function (field) {
+		var matches = definitions.filter(/* Selects input fields whose labels match the normalized text. */ function (field) {
 			return field.label && normalizedDisplayName(field.label) === normalizedLabel && field.type !== "descriptive" && field.type !== "file";
 		});
-		var householdMatches = matches.filter(function (field) { return /^h\d+_/.test(field.name); });
+		var householdMatches = matches.filter(/* Identifies fields associated with numbered household members. */ function (field) { return /^h\d+_/.test(field.name); });
 		if (householdMatches.length) {
-			return householdNumber ? householdMatches.filter(function (field) {
+			return householdNumber ? householdMatches.filter(/* Keeps only fields belonging to the identified household member. */ function (field) {
 				return new RegExp("^h" + householdNumber + "_").test(field.name);
-			}) : matches.filter(function (field) { return !/^h\d+_/.test(field.name); });
+			}) : matches.filter(/* Excludes household member fields when no member context is available. */ function (field) { return !/^h\d+_/.test(field.name); });
 		}
 		return matches;
 	}
 
+	/* Returns text following an initial label, allowing whitespace and punctuation variations. */
 	function layoutLabelTail(text, label) {
 		var normalizedText = normalizedDisplayName(text);
 		var normalizedLabel = normalizedDisplayName(label);
 		if (!normalizedLabel || (normalizedText !== normalizedLabel && normalizedText.indexOf(normalizedLabel + " ") !== 0)) return null;
-		var escapedLabel = label.trim().split(/\s+/).map(function (part) {
+		var escapedLabel = label.trim().split(/\s+/).map(/* Escapes each label word's special characters for a regular expression. */ function (part) {
 			return part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 		}).join("[\\s\\W_]+");
 		var match = String(text).match(new RegExp("^\\s*" + escapedLabel + "(?:\\s*[:\\-]?\\s*|$)", "i"));
 		return match ? String(text).slice(match[0].length).trim() : null;
 	}
 
+	/* Removes selection markers, parenthesized notes, and separators from extracted text. */
 	function layoutValueText(value) {
 		return String(value || "").replace(/[◉🔘☒☐]/g, " ").replace(/\([^)]*\)/g, " ").replace(/[|;]/g, " ").replace(/\s+/g, " ").trim();
 	}
 
+	/* Extracts text, dates, or numbers from layout values according to the field type. */
 	function layoutScalarValue(field, value) {
 		var text = layoutValueText(value);
 		if (!text) return null;
@@ -571,44 +609,48 @@
 		return text;
 	}
 
+	/* Identifies relationship and coverage choices that must be read from tables. */
 	function isTableChoiceField(field) {
 		return /^h\d+_relationship$/.test(field.name) ||
 			["medical coverage", "pharmaceutical coverage", "dental coverage"].indexOf(normalizedDisplayName(field.label)) !== -1;
 	}
 
+	/* Finds the nearest value to a label on the same page, excluding instructions and markers. */
 	function nearbyLayoutValue(labelRecord, records) {
 		if (!labelRecord.geometry) return null;
-		var candidates = records.filter(function (record) {
+		var candidates = records.filter(/* Selects nearby text within the document's value area. */ function (record) {
 			return record.geometry && record.page === labelRecord.page && record.geometry.xMin >= 3.35 &&
 				Math.abs(record.geometry.y - labelRecord.geometry.y) <= 0.42 &&
 				!/[◉🔘☒☐]/.test(record.text) && !/^\(?\s*(please|this information|the information)\b/i.test(record.text);
-		}).sort(function (left, right) {
+		}).sort(/* Prioritizes candidates with the smallest vertical distance from the label. */ function (left, right) {
 			return Math.abs(left.geometry.y - labelRecord.geometry.y) - Math.abs(right.geometry.y - labelRecord.geometry.y);
 		});
 		return candidates.length ? candidates[0] : null;
 	}
 
+	/* Detects a selection marker in an option's text or nearby lines. */
 	function selectedMarkNear(optionRecord, pageLines) {
 		if (/[◉☒]/.test(optionRecord.text)) return true;
 		if (!optionRecord.geometry) return false;
-		return pageLines.some(function (line) {
+		return pageLines.some(/* Looks for a selected marker near the option on the same page. */ function (line) {
 			return line.geometry && line.page === optionRecord.page && /[◉☒]/.test(line.text) &&
 				Math.abs(line.geometry.x - optionRecord.geometry.x) <= 0.35 &&
 				Math.abs(line.geometry.y - optionRecord.geometry.y) <= 0.34;
 		});
 	}
 
+	/* Identifies selected choice values near a field's label in the PDF. */
 	function layoutChoiceValue(field, labelRecord, pageLines) {
 		if (!labelRecord.geometry) return null;
 		var options = choices(field.choices);
 		var selected = [];
-		options.forEach(function (option) {
+		options.forEach(/* Finds lines and selection markers matching a field choice. */ function (option) {
 			var label = normalizedDisplayName(option.label);
-			var matchingLines = pageLines.filter(function (line) {
+			var matchingLines = pageLines.filter(/* Locates the choice label near the field. */ function (line) {
 				var text = normalizedDisplayName(line.text.replace(/[◉🔘☒☐]/g, " "));
 				return line.geometry && line.page === labelRecord.page && text === label &&
 					Math.abs(line.geometry.y - labelRecord.geometry.y) <= 0.72;
-			}).sort(function (left, right) {
+			}).sort(/* Orders matching lines by vertical proximity to the field label. */ function (left, right) {
 				return Math.abs(left.geometry.y - labelRecord.geometry.y) - Math.abs(right.geometry.y - labelRecord.geometry.y);
 			});
 			if (matchingLines.length && selectedMarkNear(matchingLines[0], pageLines)) selected.push(option.value);
@@ -616,13 +658,14 @@
 		return selected;
 	}
 
+	/* Extracts table choices and flags multiple selections in single-choice fields. */
 	function layoutTableEntries(contents, contextRecords) {
 		var entries = [];
-		(contents || []).forEach(function (content) {
-			(content.tables || []).forEach(function (table) {
+		(contents || []).forEach(/* Visits tables in each extracted content block. */ function (content) {
+			(content.tables || []).forEach(/* Maps a table's labels and selection markers to a form field. */ function (table) {
 				var cells = table.cells || [];
-				var cell = function (row, column) {
-					return cells.find(function (item) { return item.rowIndex === row && item.columnIndex === column; });
+				var cell = /* Finds a table cell by its row and column coordinates. */ function (row, column) {
+					return cells.find(/* Matches a cell's position to the requested row and column. */ function (item) { return item.rowIndex === row && item.columnIndex === column; });
 				};
 				var labelCell = cell(1, 0);
 				if (!labelCell) return;
@@ -630,8 +673,8 @@
 				var householdNumber = householdNumberAt(table.span ? table.span.offset : 0, contextRecords);
 				var isRelationship = normalizedDisplayName(label) === "relationship to";
 				var fields = isRelationship
-					? definitions.filter(function (field) { return householdNumber && field.name === "h" + householdNumber + "_relationship"; })
-					: layoutFieldMatches(label, householdNumber).filter(function (field) { return field.type === "radio"; });
+					? definitions.filter(/* Finds the relationship field for the identified household member. */ function (field) { return householdNumber && field.name === "h" + householdNumber + "_relationship"; })
+					: layoutFieldMatches(label, householdNumber).filter(/* Keeps single-choice fields associated with the table label. */ function (field) { return field.type === "radio"; });
 				if (fields.length !== 1) return;
 				var field = fields[0];
 				var selected = [];
@@ -654,29 +697,30 @@
 		return entries;
 	}
 
+	/* Extracts layout values and choices while preserving household context and identity. */
 	function layoutEntries(contents) {
 		var entries = [];
 		var contextRecords = [];
 		var pageLines = {};
-		(contents || []).forEach(function (content) {
+		(contents || []).forEach(/* Collects paragraphs and page lines for layout analysis. */ function (content) {
 			var paragraphs = layoutRecords(content.paragraphs);
 			contextRecords = contextRecords.concat(paragraphs);
-			(content.pages || []).forEach(function (page) {
+			(content.pages || []).forEach(/* Indexes normalized lines by page number. */ function (page) {
 				pageLines[page.pageNumber] = layoutRecords(page.lines, page.pageNumber);
 			});
 			if (!paragraphs.length) {
-				(content.pages || []).forEach(function (page) {
+				(content.pages || []).forEach(/* Uses page lines as context when the content has no paragraphs. */ function (page) {
 					contextRecords = contextRecords.concat(pageLines[page.pageNumber] || []);
 				});
 			}
 		});
-		contextRecords.sort(function (left, right) {
+		contextRecords.sort(/* Orders text records by their original document offset. */ function (left, right) {
 			return (left.span ? left.span.offset : 0) - (right.span ? right.span.offset : 0);
 		});
 
-		contextRecords.forEach(function (record) {
+		contextRecords.forEach(/* Extracts scalar values and choices using the current household context. */ function (record) {
 			var householdNumber = householdNumberAt(record.span ? record.span.offset : 0, contextRecords);
-			definitions.forEach(function (field) {
+			definitions.forEach(/* Maps a scalar value only when its label and household context are unambiguous. */ function (field) {
 				if (field.type === "radio" || field.type === "checkbox" || field.type === "descriptive" || field.type === "file") return;
 				var tail = layoutLabelTail(record.text, field.label || "");
 				if (tail === null) return;
@@ -693,7 +737,7 @@
 			});
 
 			var currentHousehold = householdNumber;
-			definitions.forEach(function (field) {
+			definitions.forEach(/* Extracts selected choices outside tables and flags ambiguous selections. */ function (field) {
 				if (field.type !== "radio" && field.type !== "checkbox") return;
 				if (isTableChoiceField(field)) return;
 				if (layoutLabelTail(record.text, field.label || "") !== "") return;
@@ -710,11 +754,11 @@
 		});
 		entries = entries.concat(layoutTableEntries(contents, contextRecords));
 		var membersWithIdentity = {};
-		entries.forEach(function (entry) {
+		entries.forEach(/* Records members with an extracted name or date of birth. */ function (entry) {
 			var identity = String(entry.logicalName || "").match(/^h(\d+)_(?:first_name|last_name|dob)$/);
 			if (identity && entry.value) membersWithIdentity[identity[1]] = true;
 		});
-		return entries.map(function (entry) {
+		return entries.map(/* Ignores household selections without supporting member identity. */ function (entry) {
 			var householdField = String(entry.logicalName || "").match(/^h(\d+)_/);
 			if (!householdField || membersWithIdentity[householdField[1]] || !entry.value || entry.skipReason) return entry;
 			entry.skipReason = "Household member identity was not found; selection was ignored.";
@@ -722,6 +766,7 @@
 		});
 	}
 
+	/* Validates the scan response and converts fields or layout into uniform entries. */
 	function extractedEntries(response) {
 		var payload = parseJsonValue(response);
 		if (payload && Object.prototype.hasOwnProperty.call(payload, "ExtractionResult")) payload = parseJsonValue(payload.ExtractionResult);
@@ -731,7 +776,7 @@
 			throw new Error((payload.errors && payload.errors.join ? payload.errors.join("; ") : payload.error) || "The document scan did not complete.");
 		}
 		if (Array.isArray(payload.fields)) {
-			return payload.fields.map(function (field) {
+			return payload.fields.map(/* Normalizes an extracted field's name, label, value, and confidence. */ function (field) {
 				return {
 					logicalName: field.logicalName || field.name || "",
 					displayName: field.displayName || field.label || "",
@@ -741,7 +786,7 @@
 			});
 		}
 		var contents = payload.result && payload.result.contents;
-		if (Array.isArray(contents) && contents.some(function (content) {
+		if (Array.isArray(contents) && contents.some(/* Recognizes content returned by a layout analyzer. */ function (content) {
 			return content && (content.analyzerId === "prebuilt-layout" || content.markdown || content.pages || content.paragraphs);
 		})) return layoutEntries(contents);
 		var fields = payload.fields;
@@ -752,18 +797,21 @@
 		return entries;
 	}
 
+	/* Normalizes a logical name by trimming whitespace and converting it to lowercase. */
 	function normalizedLogicalName(value) {
 		return String(value || "").trim().toLowerCase();
 	}
 
+	/* Normalizes labels for comparison by standardizing symbols, spaces, and letter case. */
 	function normalizedDisplayName(value) {
 		return String(value || "").trim().toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim();
 	}
 
+	/* Indexes field definitions by logical name and display label, preserving field order. */
 	function fieldIndexes() {
 		var logical = {};
 		var display = {};
-		definitions.forEach(function (field, index) {
+		definitions.forEach(/* Records the field's order and normalized keys in the lookup indexes. */ function (field, index) {
 			field.definitionIndex = index;
 			logical[normalizedLogicalName(field.name)] = field;
 			var label = normalizedDisplayName(field.label);
@@ -774,6 +822,7 @@
 		return { logical: logical, display: display };
 	}
 
+	/* Resolves an extracted field by logical name or an unambiguous display label. */
 	function resolveExtractedField(entry, indexes) {
 		var logical = normalizedLogicalName(entry.logicalName);
 		if (logical && indexes.logical[logical]) return { field: indexes.logical[logical] };
@@ -783,16 +832,18 @@
 		return { ambiguous: matches.length > 1 };
 	}
 
+	/* Converts an extracted value into a choice code by exact code or unique label. */
 	function choiceValue(field, value) {
 		var options = choices(field.choices);
 		var text = String(value === true ? "Yes" : value === false ? "No" : value).trim();
-		var exact = options.find(function (option) { return option.value === text; });
+		var exact = options.find(/* Finds a choice whose code matches the extracted value. */ function (option) { return option.value === text; });
 		if (exact) return exact.value;
 		var label = normalizedDisplayName(text);
-		var byLabel = options.filter(function (option) { return normalizedDisplayName(option.label) === label; });
+		var byLabel = options.filter(/* Finds choices by their normalized display label. */ function (option) { return normalizedDisplayName(option.label) === label; });
 		return byLabel.length === 1 ? byLabel[0].value : null;
 	}
 
+	/* Converts ISO or month/day/year dates into year-month-day format. */
 	function dateValue(value) {
 		var text = String(value || "").trim();
 		var iso = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -802,12 +853,13 @@
 		return mdy[3] + "-" + ("0" + mdy[1]).slice(-2) + "-" + ("0" + mdy[2]).slice(-2);
 	}
 
+	/* Converts an extracted value to the field's type and rejects incompatible values. */
 	function convertedValue(field, value) {
 		if (value === null || typeof value === "undefined" || value === "") return null;
 		if (field.type === "radio") return choiceValue(field, Array.isArray(value) ? value[0] : value);
 		if (field.type === "checkbox") {
 			var values = Array.isArray(value) ? value : [value];
-			var converted = values.map(function (item) { return choiceValue(field, item); }).filter(function (item) { return item !== null; });
+			var converted = values.map(/* Converts each selection into the field's choice code. */ function (item) { return choiceValue(field, item); }).filter(/* Removes choices that could not be converted. */ function (item) { return item !== null; });
 			return converted.length === values.length ? converted : null;
 		}
 		if (field.validation === "date_mdy" || field.type === "date_mdy") return dateValue(value);
@@ -822,19 +874,21 @@
 		return String(value);
 	}
 
+	/* Checks whether a field is empty or has no selected choices. */
 	function controlsAreEmpty(controls) {
 		if (!controls.length) return true;
-		if (controls[0].type === "radio" || controls[0].type === "checkbox") return !controls.some(function (control) { return control.checked; });
+		if (controls[0].type === "radio" || controls[0].type === "checkbox") return !controls.some(/* Detects controls with an existing selection. */ function (control) { return control.checked; });
 		return !controls[0].value.trim();
 	}
 
+	/* Fills only empty fields, validates the new value, and dispatches update events. */
 	function setFieldValue(field, value) {
 		var controls = getAllFieldControls(field.name);
 		if (!controls.length || !controlsAreEmpty(controls)) return false;
 		if (field.type === "radio") {
-			controls.forEach(function (control) { control.checked = control.value === value; });
+			controls.forEach(/* Selects only the radio option matching the supplied value. */ function (control) { control.checked = control.value === value; });
 		} else if (field.type === "checkbox") {
-			controls.forEach(function (control) { control.checked = value.indexOf(control.value) !== -1; });
+			controls.forEach(/* Selects checkboxes included in the supplied value list. */ function (control) { control.checked = value.indexOf(control.value) !== -1; });
 		} else {
 			controls[0].value = value;
 			if (!controls[0].checkValidity()) {
@@ -847,17 +901,18 @@
 		return true;
 	}
 
+	/* Prefills extracted fields without overwriting existing data and categorizes scan results. */
 	function populateExtractedFields(entries) {
 		var indexes = fieldIndexes();
 		var results = { populated: [], existing: [], unmapped: [], ambiguous: [], invalid: [], unsupported: [] };
-		var resolved = entries.map(function (entry) {
+		var resolved = entries.map(/* Resolves the field definition associated with an extracted entry. */ function (entry) {
 			return { entry: entry, resolution: resolveExtractedField(entry, indexes) };
-		}).sort(function (left, right) {
+		}).sort(/* Orders entries according to the dictionary's field order. */ function (left, right) {
 			var leftIndex = left.resolution.field ? left.resolution.field.definitionIndex : definitions.length;
 			var rightIndex = right.resolution.field ? right.resolution.field.definitionIndex : definitions.length;
 			return leftIndex - rightIndex;
 		});
-		resolved.forEach(function (item) {
+		resolved.forEach(/* Applies an eligible entry or records why it was not populated. */ function (item) {
 			var entry = item.entry;
 			var resolution = item.resolution;
 			var sourceName = entry.displayName || entry.logicalName || "Unnamed field";
@@ -890,6 +945,7 @@
 		return results;
 	}
 
+	/* Displays a summary of populated, preserved, invalid, and unmapped fields. */
 	function showScanSummary(results) {
 		if (!scanSummary) return;
 		var sections = [
@@ -901,7 +957,7 @@
 			["Unsupported", results.unsupported]
 		];
 		scanSummary.replaceChildren();
-		sections.forEach(function (section) {
+		sections.forEach(/* Creates a summary paragraph for each category containing results. */ function (section) {
 			if (!section[1].length) return;
 			var paragraph = document.createElement("p");
 			var heading = document.createElement("strong");
@@ -913,32 +969,35 @@
 		scanSummary.hidden = false;
 	}
 
+	/* Converts flow failures into authorization or PDF scanning errors. */
 	function scanError(xhr) {
 		if (xhr && (xhr.status === 401 || xhr.status === 403)) return new Error("Your session is not authorized to scan PDFs. Sign in again and retry.");
 		var message = xhr && xhr.responseJSON && (xhr.responseJSON.error || xhr.responseJSON.message);
 		return new Error(message || "The PDF could not be scanned.");
 	}
 
+	/* Sends the Base64 PDF to the authenticated scanning flow configured in the portal. */
 	function invokeScanFlow(file) {
 		var url = cloudFlowUrl();
 		if (!url) return Promise.reject(new Error("PDF scanning is not configured for this environment."));
 		if (!window.shell || typeof window.shell.ajaxSafePost !== "function") return Promise.reject(new Error("An authenticated portal session is required to scan PDFs."));
-		return fileToBase64(file).then(function (base64) {
-			return new Promise(function (resolve, reject) {
+		return fileToBase64(file).then(/* Prepares the flow request with the file name and Base64 content. */ function (base64) {
+			return new Promise(/* Triggers the flow and forwards its response or error to the promise. */ function (resolve, reject) {
 				window.shell.ajaxSafePost({
 					type: "POST",
 					url: url,
 					data: { eventData: JSON.stringify({ text: file.name, text_1: base64 }) }
-				}).done(resolve).fail(function (xhr) { reject(scanError(xhr)); });
+				}).done(resolve).fail(/* Converts the flow's HTTP failure into a scanning error. */ function (xhr) { reject(scanError(xhr)); });
 			});
 		});
 	}
 
+	/* Builds Base64 annotations for creation with the parent record through its navigation property. */
 	function buildAnnotations(uploads) {
 		// deep-insert via the relationship's navigation property; a standalone POST to /_api/annotations
 		// referencing the parent with @odata.bind is rejected by the portal (associate not permitted that way)
-		return Promise.all(uploads.map(function (upload) {
-			return fileToBase64(upload.file).then(function (base64) {
+		return Promise.all(uploads.map(/* Converts each attachment and prepares its annotation for submission. */ function (upload) {
+			return fileToBase64(upload.file).then(/* Builds the annotation metadata and Base64 document content. */ function (base64) {
 				return {
 					subject: upload.field.label,
 					filename: upload.file.name,
@@ -949,9 +1008,10 @@
 		}));
 	}
 
+	/* Serializes form values while preserving hidden field keys and file metadata. */
 	function formData() {
 		var data = {};
-		definitions.forEach(function (field) {
+		definitions.forEach(/* Collects a field value and converts files or numbers for the record JSON. */ function (field) {
 			if (field.type === "descriptive") return;
 			var fieldElement = form.querySelector('[data-field-name="' + field.name + '"]');
 			var node = getFieldControls(field.name)[0];
@@ -963,7 +1023,7 @@
 			}
 			var value = getValue(field.name);
 			if (field.type === "file") {
-				value = Array.from(node.files || []).map(function (file) { return { name: file.name, type: file.type, size: file.size, lastModified: file.lastModified }; });
+				value = Array.from(node.files || []).map(/* Extracts file metadata without including file content in the form JSON. */ function (file) { return { name: file.name, type: file.type, size: file.size, lastModified: file.lastModified }; });
 			} else if ((field.type === "number" || field.type === "integer") && value !== "") {
 				value = Number(value);
 			}
@@ -972,21 +1032,22 @@
 		return data;
 	}
 
+	/* Validates eligible fields against dictionary requirements, types, and limits. */
 	function validateDictionaryFields() {
 		var valid = true;
-		definitions.forEach(function (field) {
+		definitions.forEach(/* Validates a field and updates its validation message. */ function (field) {
 			if (field.type === "descriptive") return;
 			var fieldElement = form.querySelector('[data-field-name="' + field.name + '"]');
 			var node = getFieldControls(field.name)[0];
 			if (!node || !fieldElement || (fieldElement.hidden && fieldElement.dataset.annotationHidden !== "true")) return;
 			var error = fieldElement.querySelector(".hipp-validation-error");
 			var inputs = field.type === "radio" || field.type === "checkbox"
-				? Array.from(fieldElement.querySelectorAll('input[data-field-name="' + field.name + '"]')).filter(function (input) { return !input.disabled; })
+				? Array.from(fieldElement.querySelectorAll('input[data-field-name="' + field.name + '"]')).filter(/* Considers only enabled choices during validation. */ function (input) { return !input.disabled; })
 				: [node];
 			var value = getValue(field.name);
 			var fieldValid = true;
 			if (field.required && (field.type === "radio" || field.type === "checkbox")) {
-				fieldValid = inputs.some(function (input) { return input.checked; });
+				fieldValid = inputs.some(/* Confirms that the required group has a selected option. */ function (input) { return input.checked; });
 			}
 			if (field.required && field.type === "file") fieldValid = node.files && node.files.length > 0;
 			if (value && field.validation === "number") fieldValid = Number.isFinite(Number(value));
@@ -1000,10 +1061,11 @@
 		return valid;
 	}
 
+	/* Enables submission based on required fields and scanner activity and shows remaining fields. */
 	function updateSubmitState() {
 		var missing = [];
 		var total = 0;
-		definitions.forEach(function (field) {
+		definitions.forEach(/* Counts visible required fields and records those still missing values. */ function (field) {
 			if (!field.required || field.type === "descriptive") return;
 			var fieldElement = form.querySelector('[data-field-name="' + field.name + '"]');
 			// fields hidden by @HIDDEN are exempt; fields hidden by branching still block submit while invisible
@@ -1013,7 +1075,7 @@
 			var controls = getFieldControls(field.name);
 			var fieldMissing = false;
 			if (field.type === "radio" || field.type === "checkbox") {
-				fieldMissing = !controls.some(function (input) { return input.checked; });
+				fieldMissing = !controls.some(/* Detects a selected option to determine whether the group is complete. */ function (input) { return input.checked; });
 			} else if (field.type === "file") {
 				fieldMissing = !controls[0] || !controls[0].files || controls[0].files.length === 0;
 			} else {
@@ -1030,6 +1092,7 @@
 		}
 	}
 
+	/* Returns PDF selection, type, or size errors, enforcing the 10 MB limit. */
 	function pdfValidationMessage(file) {
 		if (!file) return "Choose a PDF file.";
 		if (file.type !== "application/pdf" && !/\.pdf$/i.test(file.name)) return "Choose a PDF file.";
@@ -1037,6 +1100,7 @@
 		return "";
 	}
 
+	/* Enables scanning only when definitions and flow configuration are ready and no scan is active. */
 	function updateScanButtonState() {
 		if (!scanButton) return;
 		scanButton.disabled = scanBusy || !definitionsReady || !cloudFlowUrl();
@@ -1045,10 +1109,10 @@
 	if (scanner && scanFileInput && scanButton) {
 		updateScanButtonState();
 		if (!cloudFlowUrl()) setScanStatus("PDF scanning is not configured for this environment.", true);
-		scanButton.addEventListener("click", function () {
+		scanButton.addEventListener("click", /* Opens the PDF picker when the scan button is enabled. */ function () {
 			if (!scanButton.disabled) scanFileInput.click();
 		});
-		scanFileInput.addEventListener("change", function () {
+		scanFileInput.addEventListener("change", /* Validates the selected PDF and starts scanning to prefill empty fields. */ function () {
 			pendingScannedPdf = null;
 			if (scanSummary) scanSummary.hidden = true;
 			var file = scanFileInput.files[0];
@@ -1064,14 +1128,14 @@
 			} else {
 				setScanBusy(true);
 				setScanStatus("Uploading and scanning " + file.name + "...", false);
-				invokeScanFlow(file).then(function (response) {
+				invokeScanFlow(file).then(/* Applies extracted values, retains the PDF as an attachment, and displays the scan summary. */ function (response) {
 					var results = populateExtractedFields(extractedEntries(response));
 					pendingScannedPdf = file;
 					showScanSummary(results);
 					setScanStatus("Scan complete. " + results.populated.length + " empty fields populated. Review the form before submitting.", false);
-				}).catch(function (error) {
+				}).catch(/* Displays errors from PDF scanning or prefilling. */ function (error) {
 					setScanStatus(error.message || "The PDF could not be scanned.", true);
-				}).finally(function () {
+				}).finally(/* Clears the file selection and releases controls after scanning. */ function () {
 					scanFileInput.value = "";
 					setScanBusy(false);
 				});
@@ -1079,26 +1143,27 @@
 		});
 	}
 
+	/* Creates the Dataverse record with a verification token and upload progress. */
 	function createRecord(token, payload) {
-		return new Promise(function (resolve, reject) {
+		return new Promise(/* Configures and sends the HTTP request that creates the record. */ function (resolve, reject) {
 			var xhr = new XMLHttpRequest();
 			xhr.open("POST", "/_api/cr417_hipprecordses");
 			xhr.setRequestHeader("Content-Type", "application/json");
 			xhr.setRequestHeader("Accept", "application/json");
 			xhr.setRequestHeader("__RequestVerificationToken", token);
-			xhr.upload.onprogress = function (event) {
+			xhr.upload.onprogress = /* Updates the uploaded percentage when the total size is known. */ function (event) {
 				if (event.lengthComputable) setProgress(Math.round((event.loaded / event.total) * 100));
 			};
-			xhr.onload = function () {
+			xhr.onload = /* Resolves record creation for successful responses or rejects the HTTP error. */ function () {
 				if (xhr.status >= 200 && xhr.status < 300) resolve();
 				else reject(new Error("HTTP " + xhr.status));
 			};
-			xhr.onerror = function () { reject(new Error("Network error")); };
+			xhr.onerror = /* Rejects record creation when a network error occurs. */ function () { reject(new Error("Network error")); };
 			xhr.send(JSON.stringify(payload));
 		});
 	}
 
-	form.addEventListener("submit", function (event) {
+	form.addEventListener("submit", /* Validates the form and coordinates the token, attachments, and record creation. */ function (event) {
 		event.preventDefault();
 		if (scanBusy) return;
 		if (!form.checkValidity() || !validateDictionaryFields()) {
@@ -1110,33 +1175,33 @@
 		setStatus("Saving record...", false);
 		setProgress(0);
 		var uploads = collectFileUploads();
-		Promise.all([requestToken(), buildAnnotations(uploads)]).then(function (results) {
+		Promise.all([requestToken(), buildAnnotations(uploads)]).then(/* Builds the record with its annotations and starts the Dataverse write request. */ function (results) {
 			var token = results[0];
 			var annotations = results[1];
 			var payload = { cr417_name: recordName(), cr417_recordjson: JSON.stringify(formData()) };
 			if (annotations.length) payload["cr417_hipprecords_Annotations"] = annotations;
 			setStatus(uploads.length ? "Uploading attachments..." : "Saving record...", false);
 			return createRecord(token, payload);
-		}).then(function () {
+		}).then(/* Resets the form and reports successful record creation. */ function () {
 			form.reset();
 			pendingScannedPdf = null;
 			if (scanSummary) scanSummary.hidden = true;
 			setScanStatus("", false);
 			setStatus("Record created successfully.", false);
-		}).catch(function (error) {
+		}).catch(/* Displays failures from preparing or creating the record. */ function (error) {
 			setStatus("Unable to create the record. " + error.message, true);
-		}).finally(function () { setProgress(null); updateScanButtonState(); updateSubmitState(); });
+		}).finally(/* Hides progress and recalculates button availability after submission. */ function () { setProgress(null); updateScanButtonState(); updateSubmitState(); });
 	});
 
 	fetch(definitionsUrl, { headers: { Accept: "application/json" } })
-		.then(function (response) { if (!response.ok) throw new Error("Definitions HTTP " + response.status); return response.json(); })
-		.then(function (data) {
+		.then(/* Validates the HTTP response and reads the field definitions as JSON. */ function (response) { if (!response.ok) throw new Error("Definitions HTTP " + response.status); return response.json(); })
+		.then(/* Stores definitions, renders the form, and updates the scan button. */ function (data) {
 			definitions = data;
 			definitionsReady = true;
 			render();
 			updateScanButtonState();
 		})
-		.catch(function (error) {
+		.catch(/* Clears the fields and reports a field definition loading failure. */ function (error) {
 			fieldsContainer.replaceChildren();
 			setStatus("Application fields could not be loaded. " + error.message, true);
 		});

@@ -730,7 +730,7 @@
 
 <script>
   // Initializes the tree and viewer after the page HTML is ready.
-  document.addEventListener("DOMContentLoaded", function () {
+  document.addEventListener("DOMContentLoaded", /* Initializes document trees, record browsing, field editing, and PDF viewing after the DOM is ready. */ function () {
 
     const viewer = document.getElementById("pdfViewer");
     const statusElement = document.getElementById("viewerStatus");
@@ -753,19 +753,19 @@
     let recordsNextLink = "/_api/cr417_hipprecordses?$select=cr417_hipprecordsid,cr417_name,cr417_recordjson,createdon&$orderby=createdon%20desc&$top=50";
 
     fetch("/hipp-field-definitions.json", { headers: { "Accept": "application/json" } })
-      .then(function (response) {
+      .then(/* Validates the HTTP response and parses the field dictionary JSON. */ function (response) {
         if (!response.ok) {
           throw new Error("HTTP " + response.status);
         }
 
         return response.json();
       })
-      .then(function (definitions) {
+      .then(/* Loads field and choice labels and refreshes the selected record when available. */ function (definitions) {
         if (!Array.isArray(definitions)) {
           return;
         }
 
-        definitions.forEach(function (definition) {
+        definitions.forEach(/* Indexes a field's display label and its available choice labels. */ function (definition) {
           const name = definition && typeof definition.name === "string" ? definition.name.trim() : "";
           const label = definition && typeof definition.label === "string" ? definition.label.trim() : "";
           const choices = definition && typeof definition.choices === "string" ? definition.choices.trim() : "";
@@ -777,7 +777,7 @@
           if (name && choices) {
             const choiceLabels = Object.create(null);
 
-            choices.split("|").forEach(function (choice) {
+            choices.split("|").forEach(/* Splits a choice into its stored value and display label. */ function (choice) {
               const separatorIndex = choice.indexOf(",");
 
               if (separatorIndex < 0) {
@@ -802,12 +802,12 @@
           renderRecord(selectedRecordItem.recordData);
         }
       })
-      .catch(function (error) {
+      .catch(/* Logs failures when loading record field labels. */ function (error) {
         console.error("Unable to load record field display names:", error);
       });
 
-    function activateViewerTab(tab, moveFocus) {
-      viewerTabs.forEach(function (viewerTab) {
+    /* Activates a viewer tab, synchronizes accessibility states, and loads records when needed. */ function activateViewerTab(tab, moveFocus) {
+      viewerTabs.forEach(/* Updates each tab's selected state, tab order, and associated panel visibility. */ function (viewerTab) {
         const active = viewerTab === tab;
         const panel = document.getElementById(viewerTab.getAttribute("aria-controls"));
         viewerTab.setAttribute("aria-selected", String(active));
@@ -827,11 +827,11 @@
       }
     }
 
-    viewerTabs.forEach(function (tab, index) {
-      tab.addEventListener("click", function () {
+    viewerTabs.forEach(/* Registers click and keyboard navigation handlers for a viewer tab. */ function (tab, index) {
+      tab.addEventListener("click", /* Activates the clicked viewer tab without moving focus. */ function () {
         activateViewerTab(tab, false);
       });
-      tab.addEventListener("keydown", function (event) {
+      tab.addEventListener("keydown", /* Navigates viewer tabs with arrow, Home, and End keys. */ function (event) {
         let nextIndex = index;
 
         if (event.key === "ArrowRight") {
@@ -851,7 +851,7 @@
       });
     });
 
-    function parseRecordJson(jsonText) {
+    /* Parses record JSON, including double serialization, and accepts only object data. */ function parseRecordJson(jsonText) {
       if (!jsonText) {
         return null;
       }
@@ -865,7 +865,7 @@
       return parsed && !Array.isArray(parsed) && typeof parsed === "object" ? parsed : null;
     }
 
-    function formatRecordTitle(record) {
+    /* Formats a record title with its name and timestamp or creation date. */ function formatRecordTitle(record) {
       const recordName = (record.cr417_name || "Unnamed record").trim();
       const timestampMatch = recordName.match(/^(.*?)\s*-\s*(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})(?::\d{2}(?:\.\d+)?)?Z?$/);
 
@@ -888,7 +888,7 @@
       return recordName;
     }
 
-    function formatRecordTime(value) {
+    /* Converts a valid 24-hour time into a 12-hour display with AM or PM. */ function formatRecordTime(value) {
       const parts = String(value).split(":");
       const hours = Number(parts[0]);
       const minutes = parts[1] || "00";
@@ -900,7 +900,7 @@
       return (hours % 12 || 12) + ":" + minutes + (hours >= 12 ? " PM" : " AM");
     }
 
-    function getRecordMenuParts(record) {
+    /* Separates a record's menu title into name and formatted date. */ function getRecordMenuParts(record) {
       const recordName = (record.cr417_name || "Unnamed record").trim();
       const timestampMatch = recordName.match(/^(.*?)\s*-\s*(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})(?::\d{2}(?:\.\d+)?)?Z?$/);
 
@@ -919,7 +919,7 @@
         : { name: title, date: "" };
     }
 
-    function getRecordChoiceDisplayName(fieldKey, value) {
+    /* Resolves a stored choice value to its label, falling back to the stored text. */ function getRecordChoiceDisplayName(fieldKey, value) {
       const choices = recordFieldChoices[fieldKey];
       const storedValue = String(value);
 
@@ -928,7 +928,7 @@
         : storedValue;
     }
 
-    function createRecordValue(fieldKey, value) {
+    /* Creates a display element for an empty, scalar, object, or array record value. */ function createRecordValue(fieldKey, value) {
       if (value === null || value === undefined || value === "") {
         const emptyValue = document.createElement("p");
         emptyValue.className = "record-field-value is-empty";
@@ -943,7 +943,7 @@
 
         const list = document.createElement("ul");
         list.className = "record-value-list";
-        value.forEach(function (entry) {
+        value.forEach(/* Creates a list item for an array entry using JSON or its choice label. */ function (entry) {
           const listItem = document.createElement("li");
           listItem.textContent = entry && typeof entry === "object"
             ? JSON.stringify(entry, null, 2)
@@ -961,7 +961,7 @@
       return displayValue;
     }
 
-    function createRecordHierarchy(values) {
+    /* Groups record fields into a hierarchy of general, policyholder, household, and employer sections. */ function createRecordHierarchy(values) {
       const groups = {
         general: { label: "General Information", fields: [], children: [] },
         policyholder: { label: "Policyholder", fields: [], children: [] },
@@ -982,7 +982,7 @@
       const employerFields = /^e_(status|hired_date|retired|school_|contract_year|hr_|representative_phone|employer|address|city|state|zip|employee_ins_nbr|self_employed)/;
       const documentFields = /^e_(paystub_upload|plan_summary_upload|eiv_upload|insurance_card_upload|supporting_doc)/;
 
-      Object.entries(values).forEach(function (entry) {
+      Object.entries(values).forEach(/* Assigns a field to its section or numbered household member. */ function (entry) {
         const key = entry[0];
         const field = { key: key, value: entry[1] };
         const personMatch = key.match(/^h(\d+)_(.+)$/);
@@ -1031,19 +1031,19 @@
       groups.policyholder.children = [groups.policyholderAddress, groups.memberAddress].filter(groupHasData);
       groups.household.children = Object.keys(householdPeople)
         .map(Number)
-        .sort(function (left, right) { return left - right; })
-        .filter(function (personNumber) {
-          return householdPeople[personNumber].fields.some(function (field) {
+        .sort(/* Sorts household member numbers in ascending order. */ function (left, right) { return left - right; })
+        .filter(/* Keeps household members with at least one meaningful field value. */ function (personNumber) {
+          return householdPeople[personNumber].fields.some(/* Checks whether a household field contains a meaningful value. */ function (field) {
             return hasMeaningfulRecordValue(field.value);
           });
         })
-        .map(function (personNumber) { return householdPeople[personNumber]; });
+        .map(/* Returns the group associated with a household member number. */ function (personNumber) { return householdPeople[personNumber]; });
       groups.employer.children = [groups.healthPlan, groups.medical, groups.pharmacy, groups.dental, groups.vision, groups.documents].filter(groupHasData);
 
       return [groups.general, groups.policyholder, groups.household, groups.employer, groups.other].filter(groupHasData);
     }
 
-    function hasMeaningfulRecordValue(value) {
+    /* Recursively checks whether a value contains meaningful scalar, array, or object data. */ function hasMeaningfulRecordValue(value) {
       if (value === null || value === undefined) {
         return false;
       }
@@ -1057,7 +1057,7 @@
       }
 
       if (typeof value === "object") {
-        return Object.keys(value).some(function (key) {
+        return Object.keys(value).some(/* Checks whether an object's property contains meaningful data. */ function (key) {
           return hasMeaningfulRecordValue(value[key]);
         });
       }
@@ -1065,17 +1065,17 @@
       return true;
     }
 
-    function groupHasData(group) {
+    /* Checks whether a group contains fields or child groups. */ function groupHasData(group) {
       return group.fields.length > 0 || group.children.length > 0;
     }
 
-    function formatRecordFieldLabel(key) {
+    /* Builds a readable field label from its technical key while preserving common acronyms. */ function formatRecordFieldLabel(key) {
       const fieldName = key.replace(/^(p|m|h\d+|h|e)_/, "");
 
       return fieldName
         .split("_")
         .filter(Boolean)
-        .map(function (word) {
+        .map(/* Capitalizes a label word unless it is a recognized acronym. */ function (word) {
           const upperWord = word.toUpperCase();
           return /^(ID|DOB|SSN|HSA|EIV|HR|ZIP|OOP)$/.test(upperWord)
             ? upperWord
@@ -1084,11 +1084,11 @@
         .join(" ");
     }
 
-    function getRecordFieldLabel(key) {
+    /* Returns the dictionary label or derives a readable label from the field key. */ function getRecordFieldLabel(key) {
       return recordFieldLabels[key] || formatRecordFieldLabel(key);
     }
 
-    function createRecordField(fieldData) {
+    /* Creates a record field element with its label and formatted value. */ function createRecordField(fieldData) {
       const field = document.createElement("div");
       const label = document.createElement("span");
       field.className = "record-field";
@@ -1099,7 +1099,7 @@
       return field;
     }
 
-    function appendRecordFields(content, fields) {
+    /* Appends record fields and sets a layout with up to three columns. */ function appendRecordFields(content, fields) {
       const columnCount = Math.min(3, fields.length);
 
       if (!columnCount) {
@@ -1108,12 +1108,12 @@
       }
 
       content.style.setProperty("--record-column-count", String(columnCount));
-      fields.forEach(function (fieldData) {
+      fields.forEach(/* Creates and appends a field element to the group content. */ function (fieldData) {
         content.appendChild(createRecordField(fieldData));
       });
     }
 
-    function createRecordGroup(group, depth) {
+    /* Creates a collapsible record group with its fields and nested child groups. */ function createRecordGroup(group, depth) {
       const details = document.createElement("details");
       const summary = document.createElement("summary");
       const content = document.createElement("div");
@@ -1127,13 +1127,13 @@
 
       details.appendChild(summary);
       details.appendChild(content);
-      group.children.forEach(function (child) {
+      group.children.forEach(/* Creates and appends a nested record group. */ function (child) {
         details.appendChild(createRecordGroup(child, depth + 1));
       });
       return details;
     }
 
-    function renderRecord(record) {
+    /* Parses and renders a record hierarchy, displaying errors or empty states when needed. */ function renderRecord(record) {
       recordViewerTitle.textContent = formatRecordTitle(record);
       recordForm.replaceChildren();
 
@@ -1165,7 +1165,7 @@
         return;
       }
 
-      createRecordHierarchy(values).forEach(function (group) {
+      createRecordHierarchy(values).forEach(/* Appends a top-level group to the record viewer. */ function (group) {
         recordForm.appendChild(createRecordGroup(group, 0));
       });
 
@@ -1174,7 +1174,7 @@
       recordViewer.hidden = false;
     }
 
-    function selectRecord(item, moveFocus) {
+    /* Updates the selected record and tab order, optionally moves focus, and renders its data. */ function selectRecord(item, moveFocus) {
       if (selectedRecordItem) {
         selectedRecordItem.setAttribute("aria-selected", "false");
         selectedRecordItem.tabIndex = -1;
@@ -1191,8 +1191,8 @@
       renderRecord(item.recordData);
     }
 
-    function appendRecord(record) {
-      const duplicate = Array.from(recordsList.children).some(function (item) {
+    /* Adds a unique record button to the list with its name, date, and selection handler. */ function appendRecord(record) {
+      const duplicate = Array.from(recordsList.children).some(/* Detects an existing list item with the same record identifier. */ function (item) {
         return item.dataset.recordId === record.cr417_hipprecordsid;
       });
 
@@ -1219,13 +1219,13 @@
       if (menuParts.date) {
         item.appendChild(date);
       }
-      item.addEventListener("click", function () {
+      item.addEventListener("click", /* Selects the clicked record without moving focus. */ function () {
         selectRecord(item, false);
       });
       recordsList.appendChild(item);
     }
 
-    async function loadRecordsPage() {
+    /* Loads the next records page, updates pagination and counts, and reports API failures. */ async function loadRecordsPage() {
       if (recordsLoading || !recordsNextLink) {
         return;
       }
@@ -1281,7 +1281,7 @@
     }
 
     recordsLoadMore.addEventListener("click", loadRecordsPage);
-    recordsList.addEventListener("keydown", function (event) {
+    recordsList.addEventListener("keydown", /* Navigates and selects records with arrow, Home, End, Enter, and Space keys. */ function (event) {
       const items = Array.from(recordsList.querySelectorAll(".record-item"));
       const currentIndex = items.indexOf(document.activeElement);
       let nextItem = null;
@@ -1325,7 +1325,7 @@
       { prefix: "Agreement", label: "Agreement" }
     ];
 
-    // Converts technical property names into readable labels.
+    // Converts technical property names into readable labels while preserving ID and SSN.
     function titleCase(value) {
       return value
         .replace(/([a-z])([A-Z])/g, "$1 $2")
@@ -1335,9 +1335,9 @@
         .trim();
     }
 
-    // Finds the field's typed value and converts it to display text.
+    // Finds a field's typed value and formats booleans and dates for display.
     function getFieldValue(field) {
-      const valueKey = Object.keys(field || {}).find(function (key) {
+      const valueKey = Object.keys(field || {}).find(/* Finds the property containing a field's typed value. */ function (key) {
         return key.indexOf("value") === 0;
       });
 
@@ -1359,7 +1359,7 @@
       return String(value);
     }
 
-    // Determines the tree section based on the extracted property name.
+    // Determines the tree section and label from an extracted field's name.
     function getGroupInfo(fieldName) {
       const householdMatch = fieldName.match(/^Household(\d+)(st|nd|rd|th)Person(.*)$/);
 
@@ -1373,7 +1373,7 @@
         };
       }
 
-      const definition = groupDefinitions.find(function (group) {
+      const definition = groupDefinitions.find(/* Finds the section prefix matching the extracted field name. */ function (group) {
         return fieldName.indexOf(group.prefix) === 0;
       });
 
@@ -1392,7 +1392,7 @@
       };
     }
 
-    // Deserializes normal JSON or JSON that was serialized twice.
+    // Parses extracted JSON and records whether it was serialized twice.
     function parseExtractedJson(jsonText) {
       const parsed = JSON.parse(jsonText);
 
@@ -1402,13 +1402,13 @@
       };
     }
 
-    // Applies the same serialization level originally used by Dataverse.
+    // Serializes extracted data using its original serialization depth.
     function serializeExtractedJson(payload) {
       const serialized = JSON.stringify(payload.value);
       return payload.serializedTwice ? JSON.stringify(serialized) : serialized;
     }
 
-    // Prepares extracted fields for rendering and discards fields without values.
+    // Prepares nonempty extracted fields below 80% confidence for rendering.
     function parseFields(jsonText) {
       if (!jsonText) {
         return [];
@@ -1422,7 +1422,7 @@
         return [];
       }
 
-      return Object.keys(fields).map(function (fieldName) {
+      return Object.keys(fields).map(/* Builds display and editing metadata for a nonempty low-confidence field. */ function (fieldName) {
         const field = fields[fieldName] || {};
 
         if (typeof field.confidence !== "number" || field.confidence >= 0.8) {
@@ -1443,7 +1443,7 @@
           groupLabel: group.label,
           label: titleCase(group.fieldLabel),
           value: value,
-          valueKey: Object.keys(field).find(function (key) {
+          valueKey: Object.keys(field).find(/* Finds the typed value property used when editing the extracted field. */ function (key) {
             return key.indexOf("value") === 0;
           }),
           fieldType: field.type || "string",
@@ -1453,7 +1453,7 @@
       }).filter(Boolean);
     }
 
-    // Converts GitHub blob links to the raw endpoint supported by fetch.
+    // Converts GitHub blob URLs into raw URLs that can be fetched.
     function normalizePdfUrl(url) {
       const value = (url || "").trim();
       const githubMatch = value.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)$/i);
@@ -1465,7 +1465,7 @@
       return value;
     }
 
-    // Creates a reusable ARIA item for documents, groups, and fields.
+    // Creates an ARIA tree item for a document, group, or field.
     function createTreeItem(label, level, hasChildren) {
       const item = document.createElement("div");
       item.className = "pdf-treeitem";
@@ -1482,7 +1482,7 @@
       return item;
     }
 
-    // Creates a collapsed group and its editable field inputs.
+    // Creates a collapsed field group with editable inputs, save buttons, and confidence labels.
     function createGroup(group, fields, pdfUrl, recordId, level) {
       const item = createTreeItem(group.label, level, true);
       const children = document.createElement("div");
@@ -1492,7 +1492,7 @@
       item.dataset.expanded = "false";
       item.setAttribute("aria-expanded", "false");
 
-      fields.forEach(function (field) {
+      fields.forEach(/* Creates an editable leaf with PDF source metadata and confidence information. */ function (field) {
         const leaf = createTreeItem(field.label, level + 1, false);
         leaf.classList.add("pdf-link");
         leaf.dataset.pdfUrl = pdfUrl;
@@ -1512,10 +1512,10 @@
         input.type = "text";
         input.value = field.value;
         input.setAttribute("aria-label", field.label);
-        input.addEventListener("click", function (event) {
+        input.addEventListener("click", /* Stops input clicks from selecting the containing tree item. */ function (event) {
           event.stopPropagation();
         });
-        input.addEventListener("keydown", function (event) {
+        input.addEventListener("keydown", /* Stops input keystrokes from triggering tree navigation. */ function (event) {
           event.stopPropagation();
         });
         editor.appendChild(input);
@@ -1545,7 +1545,7 @@
       return item;
     }
 
-    // Converts each Liquid placeholder into a document field tree.
+    // Converts a Liquid document placeholder into a grouped tree of extracted fields.
     function renderDocumentTree(documentElement) {
       const pdfUrl = normalizePdfUrl(documentElement.dataset.pdfUrl) || (
         documentElement.dataset.pdfId
@@ -1585,8 +1585,8 @@
       documentItem.querySelector(":scope > .pdf-treeitem-label").prepend(documentIcon);
 
       const groups = [];
-      fields.forEach(function (field) {
-        let group = groups.find(function (entry) {
+      fields.forEach(/* Assigns an extracted field to an existing group or creates a new group. */ function (field) {
+        let group = groups.find(/* Finds the group matching the field's section key. */ function (entry) {
           return entry.key === field.groupKey;
         });
 
@@ -1598,7 +1598,7 @@
         group.fields.push(field);
       });
 
-      groups.forEach(function (group) {
+      groups.forEach(/* Creates and appends a field group to the document tree. */ function (group) {
         documentGroup.appendChild(createGroup(group, group.fields, pdfUrl, documentElement.dataset.pdfId, 2));
       });
 
@@ -1609,29 +1609,29 @@
       documentElement.replaceChildren(documentItem);
     }
 
-    // Returns only the visible nodes for keyboard navigation.
+    // Returns visible tree nodes for keyboard navigation.
     function getVisibleItems() {
-      return Array.from(tree.querySelectorAll('[role="treeitem"]')).filter(function (item) {
+      return Array.from(tree.querySelectorAll('[role="treeitem"]')).filter(/* Excludes items inside hidden tree groups. */ function (item) {
         return !item.closest('[role="group"][hidden]');
       });
     }
 
-    // Implements roving focus: only one tree item is focusable at a time.
+    // Moves focus to an item and makes it the tree's only tabbable node.
     function setFocus(item) {
       if (!item) {
         return;
       }
 
-      tree.querySelectorAll('[role="treeitem"]').forEach(function (otherItem) {
+      tree.querySelectorAll('[role="treeitem"]').forEach(/* Updates each tree item's tab index for roving focus. */ function (otherItem) {
         otherItem.tabIndex = otherItem === item ? 0 : -1;
       });
       item.focus();
     }
 
-    // Gets the token required by Power Pages for write requests.
+    // Retrieves the Power Pages verification token required for write requests.
     function getRequestVerificationToken() {
       if (window.shell && typeof window.shell.getTokenDeferred === "function") {
-        return new Promise(function (resolve, reject) {
+        return new Promise(/* Forwards portal token retrieval success or failure to the promise. */ function (resolve, reject) {
           window.shell.getTokenDeferred().done(resolve).fail(reject);
         });
       }
@@ -1640,7 +1640,7 @@
       return Promise.resolve(tokenElement ? tokenElement.value : "");
     }
 
-    // Converts edited text back to the type stored in the JSON.
+    // Converts edited text into the boolean, integer, date, or string value stored in JSON.
     function getEditedValue(input, fieldType) {
       const value = input.value.trim();
 
@@ -1660,7 +1660,7 @@
       return value;
     }
 
-    // Updates only the edited field and persists the JSON to the Dataverse record.
+    // Persists only the edited field to Dataverse and updates local state after a successful save.
     async function saveField(item, input, saveButton) {
       const recordId = item.dataset.recordId;
       const root = item.closest(".pdf-tree");
@@ -1711,7 +1711,7 @@
       showSaveConfirmation(oldValue, input.value);
     }
 
-    // Displays confirmation with the values before and after saving.
+    // Displays save confirmation with the old and new values in a dialog or alert.
     function showSaveConfirmation(oldValue, newValue) {
       const dialog = document.getElementById("fieldSaveDialog");
       const message = document.getElementById("fieldSaveDialogMessage");
@@ -1726,7 +1726,7 @@
       }
     }
 
-    // Synchronizes the group's visual expansion with aria-expanded.
+    // Synchronizes group expansion and ARIA state, collapses other documents, and focuses the first child.
     function toggleItem(item, expanded) {
       const group = item.querySelector(':scope > [role="group"]');
 
@@ -1737,7 +1737,7 @@
       const nextExpanded = expanded === undefined ? item.getAttribute("aria-expanded") !== "true" : expanded;
 
       if (nextExpanded && item.classList.contains("pdf-document-treeitem")) {
-        tree.querySelectorAll(".pdf-document-treeitem").forEach(function (documentItem) {
+        tree.querySelectorAll(".pdf-document-treeitem").forEach(/* Collapses other document tree items when a document is expanded. */ function (documentItem) {
           if (documentItem !== item) {
             toggleItem(documentItem, false);
           }
@@ -1757,7 +1757,7 @@
       }
     }
 
-    // Selects a field or toggles a group; leaves load the corresponding PDF.
+    // Expands a group or selects a field and loads its PDF with the requested highlights.
     function selectLeaf(item) {
       if (item.dataset.hasChildren === "true") {
         toggleItem(item);
@@ -1787,7 +1787,7 @@
       });
     }
 
-    // Implements the standard keyboard navigation keys for an ARIA tree.
+    // Implements keyboard navigation, expansion, and selection for the ARIA document tree.
     function handleTreeKeydown(event) {
       const item = event.target.closest('[role="treeitem"]');
 
@@ -1832,8 +1832,8 @@
 
     // Hydrates the documents, registers editors, and connects tree events.
     tree.querySelectorAll(".pdf-tree").forEach(renderDocumentTree);
-    tree.querySelectorAll(".pdf-treeitem-input").forEach(function (input) {
-      input.addEventListener("input", function () {
+    tree.querySelectorAll(".pdf-treeitem-input").forEach(/* Registers change detection for an extracted field input. */ function (input) {
+      input.addEventListener("input", /* Shows the save button only when the input differs from its original value. */ function () {
         const item = input.closest('[role="treeitem"]');
         const saveButton = item && item.querySelector(".pdf-treeitem-save");
 
@@ -1842,8 +1842,8 @@
         }
       });
     });
-    tree.querySelectorAll(".pdf-treeitem-save").forEach(function (saveButton) {
-      saveButton.addEventListener("click", async function (event) {
+    tree.querySelectorAll(".pdf-treeitem-save").forEach(/* Registers the asynchronous save handler for a field's save button. */ function (saveButton) {
+      saveButton.addEventListener("click", /* Saves the edited field, reports failures, and restores the save button's enabled state. */ async function (event) {
         event.stopPropagation();
 
         const item = saveButton.closest('[role="treeitem"]');
@@ -1866,7 +1866,7 @@
         }
       });
     });
-    tree.addEventListener("click", function (event) {
+    tree.addEventListener("click", /* Selects the clicked tree item or toggles its group. */ function (event) {
       const item = event.target.closest('[role="treeitem"]');
 
       if (item) {
@@ -1878,7 +1878,7 @@
     const firstItem = getVisibleItems()[0];
     setFocus(firstItem);
 
-    // Normalizes accents and spaces so PDF highlighting is tolerant.
+    // Normalizes accents, whitespace, and letter case for tolerant PDF text matching.
     function normalizeText(value) {
       return (value || "")
         .normalize("NFD")
@@ -1888,7 +1888,7 @@
         .toLowerCase();
     }
 
-    // Converts D(p,x1,y1,...,x4,y4) geometry into polygons by page.
+    // Parses valid D(page,x1,y1,...,x4,y4) source commands into page polygons.
     function parseSourcePolygons(source) {
       const polygons = [];
       const sourceText = (source || "").trim();
@@ -1896,7 +1896,7 @@
       let match;
 
       while ((match = commandPattern.exec(sourceText)) !== null) {
-        const values = match[1].split(",").map(function (value) {
+        const values = match[1].split(",").map(/* Trims and converts a source geometry component into a number. */ function (value) {
           return Number(value.trim());
         });
 
@@ -1930,7 +1930,7 @@
       return polygons;
     }
 
-    // Converts inches with a top-origin coordinate system to the PDF.js CSS viewport.
+    // Converts top-origin inch coordinates into polygon points in the PDF.js CSS viewport.
     function convertSourcePolygon(page, viewport, polygon) {
       const viewBox = viewport.viewBox;
 
@@ -1940,7 +1940,7 @@
 
       const pageHeight = viewBox[3] - viewBox[1];
 
-      return polygon.points.map(function (point) {
+      return polygon.points.map(/* Converts one source point into a viewport coordinate pair. */ function (point) {
         const xPdf = viewBox[0] + point.x * 72;
         const yPdf = viewBox[1] + pageHeight - point.y * 72;
         const viewportPoint = viewport.convertToViewportPoint(xPdf, yPdf);
@@ -1949,7 +1949,7 @@
       }).join(" ");
     }
 
-    // Draws the field polygons over the corresponding page.
+    // Draws source polygons as SVG highlights over the PDF page.
     function renderPolygonHighlights(page, viewport, pageContainer, polygons) {
       if (!polygons.length) {
         return;
@@ -1961,7 +1961,7 @@
       svg.setAttribute("height", String(viewport.height));
       svg.setAttribute("viewBox", "0 0 " + viewport.width + " " + viewport.height);
 
-      polygons.forEach(function (polygon) {
+      polygons.forEach(/* Creates an SVG polygon when its viewport coordinates are available. */ function (polygon) {
         const points = convertSourcePolygon(page, viewport, polygon);
 
         if (!points) {
@@ -1978,7 +1978,7 @@
       pageContainer.appendChild(svg);
     }
 
-    // Marks text layer sections that match the selected value.
+    // Highlights text layer spans that contain the normalized search value.
     function highlightText(textLayer, searchText) {
       const normalizedSearch = normalizeText(searchText);
 
@@ -1986,7 +1986,7 @@
         return;
       }
 
-      textLayer.querySelectorAll("span").forEach(function (span) {
+      textLayer.querySelectorAll("span").forEach(/* Marks a span when its normalized text contains the selected value. */ function (span) {
         const normalizedValue = normalizeText(span.textContent);
 
         if (
@@ -1998,7 +1998,7 @@
       });
     }
 
-    // Renders a PDF page and adds its text layer to the viewer.
+    // Renders a PDF page, adds its text layer, and draws polygon or text highlights.
     async function renderPage(page, highlightSpec) {
       const scale = 1.5;
       const viewport = page.getViewport({ scale: scale });
@@ -2051,7 +2051,7 @@
         await textTask.promise;
       }
 
-      const pagePolygons = highlightSpec.polygons.filter(function (polygon) {
+      const pagePolygons = highlightSpec.polygons.filter(/* Selects source polygons belonging to the page being rendered. */ function (polygon) {
         return polygon.pageNumber === page.pageNumber;
       });
 
@@ -2062,7 +2062,7 @@
       }
     }
 
-    // Downloads the PDF, renders all pages, and scrolls to the first highlight.
+    // Downloads and renders all PDF pages, scrolls to the first highlight, and reports loading errors.
     async function loadPdf(pdfUrl, highlightSpec) {
       viewer.innerHTML = "";
 

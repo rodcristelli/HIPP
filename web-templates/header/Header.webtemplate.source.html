@@ -163,12 +163,13 @@
 {% endif %}
 {% endsubstitution %}
 <script type="text/javascript">
-    window.onload = function() {
+    window.onload = /* Adjusts the search link for Internet Explorer compatibility after page loading. */ function() {
         if (window.navigator.appName == "Microsoft Internet Explorer" || window.navigator.userAgent.indexOf("Trident") > 0) {
             var searchElement = document.getElementById("search");
             if (searchElement != null) searchElement.setAttribute("href", "");
         }
     };
+    /* Limits the navigation height to the available window height. */
     function setHeight() {
         var windowHeight = window.innerHeight - 140;
         var navbar = document.getElementById("navbar");
@@ -176,7 +177,7 @@
             navbar.style.maxHeight = windowHeight + "px";
         }
     }
-    window.addEventListener('resize', function(event) {
+    window.addEventListener('resize', /* Recalculates the navigation height when the window is resized. */ function(event) {
         setHeight();
     });
 </script>
