@@ -1,0 +1,9 @@
+adx_CloudFlowConsumer_adx_webrole:
+- 37389b8a-e71b-4caa-b2e2-04bfe2cfa849
+- 4b5146fd-6504-400d-a8bf-5c85305d48d6
+adx_cloudflowconsumerid: 99d3904b-d3c1-f111-aaaf-70a8a5b02d67
+adx_flowapiurl: /_api/cloudflow/v1.0/trigger/38bf6bfb-8cc1-f111-aaaf-70a8a5b0248a
+adx_flowtriggerurl: ''
+adx_metadata: ''
+adx_name: UploadFile
+adx_processid: 38bf6bfb-8cc1-f111-aaaf-70a8a5b0248a

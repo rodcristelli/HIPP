@@ -1,0 +1,35 @@
+<div data-component-theme="portalThemeColor" class="row sectionBlockLayout hipp-form-section" style="display: flex; flex-wrap: wrap; padding: 8px; margin: 0px;">
+  <div class="container">
+    <div class="col-md-8 columnBlockLayout hipp-form-column" style="flex-grow: 1; display: flex; flex-direction: column; min-width: 250px;">
+      <h2>Complete Your HIPP Request</h2>
+      <p>Please select your request type and complete the sections that apply to you.</p>
+      <form id="hipp-application-form" data-current-user-email="email" novalidate="">
+        <section id="hipp-pdf-scanner" class="hipp-pdf-scanner" data-cloud-flow-id="{{ settings['HIPP/ContentUnderstandingFlowId'] | escape }}" aria-labelledby="hipp-pdf-scanner-title">
+          <h3 id="hipp-pdf-scanner-title">Prefill from a PDF</h3>
+          {% if user %}
+          <p>Choose a completed HIPP PDF to scan and prefill empty fields. Review all values before submitting.</p>
+          <button id="hipp-pdf-scan" type="button" class="button1">Upload PDF and prefill</button>
+          <input id="hipp-pdf-file" type="file" accept="application/pdf,.pdf" aria-label="Choose a HIPP PDF" hidden="" />
+          <div id="hipp-pdf-progress" class="hipp-form-progress" hidden="">
+            <div id="hipp-pdf-progress-bar" class="hipp-form-progress-bar"></div>
+          </div>
+          <div id="hipp-pdf-status" class="hipp-form-status" role="status" aria-live="polite" hidden=""></div>
+          <div id="hipp-pdf-summary" class="hipp-pdf-summary" aria-live="polite" hidden=""></div>
+          {% else %}
+          <p>Sign in to upload a completed HIPP PDF and prefill empty fields.</p>
+          <button type="button" class="button1 hipp-pdf-scan-placeholder" disabled="" aria-describedby="hipp-pdf-signin-hint">Upload PDF and prefill</button>
+          <p id="hipp-pdf-signin-hint">Sign in to your account to use PDF prefill.</p>
+          {% endif %}
+        </section>
+        <div id="hipp-form-fields" aria-live="polite"><p class="hipp-form-loading" style="color: rgb(76, 89, 87);">Loading application fields...</p></div>
+        <button id="hipp-submit" type="submit" class="button1" style="max-width: 100%; width: 225px;">Submit HIPP Request</button>
+        <small id="hipp-submit-hint" class="hipp-submit-hint" role="status" aria-live="polite" hidden=""></small>
+        <div id="hipp-form-progress" class="hipp-form-progress" hidden="">
+          <div id="hipp-form-progress-bar" class="hipp-form-progress-bar"></div>
+        </div>
+        <div id="hipp-form-status" role="status" aria-live="polite" hidden="" class="hipp-form-status" style="border-left-width: 4px; border-left-style: solid; border-left-color: rgb(31, 95, 86); margin-top: 20px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; padding-top: 12px; padding-right: 16px; padding-bottom: 12px; padding-left: 16px;"></div>
+      </form>
+    </div>
+    <div class="col-md-4 columnBlockLayout hipp-image-column" style="flex-grow: 1; display: flex; flex-direction: column; min-width: 250px;"></div>
+  </div>
+</div>

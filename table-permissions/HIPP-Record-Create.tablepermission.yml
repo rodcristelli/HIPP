@@ -1,0 +1,14 @@
+adx_append: false
+adx_appendto: true
+adx_create: true
+adx_delete: false
+adx_entitylogicalname: cr417_hipprecords
+adx_entityname: HIPP Record Create
+adx_entitypermission_webrole:
+- 37389b8a-e71b-4caa-b2e2-04bfe2cfa849
+- 4b5146fd-6504-400d-a8bf-5c85305d48d6
+adx_entitypermissionid: 9c4c4f0a-54d0-4b2b-8f34-01cfce47e2c1
+adx_parententitypermission: 
+adx_read: true
+adx_scope: 756150000
+adx_write: true

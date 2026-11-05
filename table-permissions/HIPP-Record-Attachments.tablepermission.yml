@@ -1,0 +1,14 @@
+adx_append: true
+adx_appendto: false
+adx_create: true
+adx_delete: false
+adx_entitylogicalname: annotation
+adx_entityname: HIPP Record Attachments
+adx_entitypermission_webrole:
+- 37389b8a-e71b-4caa-b2e2-04bfe2cfa849
+- 4b5146fd-6504-400d-a8bf-5c85305d48d6
+adx_entitypermissionid: 6f1a2b3c-4d5e-4f60-8a9b-0c1d2e3f4a5b
+adx_parententitypermission: 
+adx_read: false
+adx_scope: 756150000
+adx_write: false

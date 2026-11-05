@@ -1,0 +1,255 @@
+.hipp-hero {
+	background-image: url("/Form-2.jpg");
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-size: cover;
+	min-height: 60vh;
+}
+
+.hipp-hero-content {
+	display: flex;
+	flex-direction: column;
+	margin: 180px 0;
+	text-align: center;
+}
+
+.hipp-hero-content h1,
+.hipp-hero-content p {
+	color: white;
+}
+
+.hipp-hero-content p {
+	font-size: 1.2rem;
+}
+
+.hipp-form-section {
+	padding: 40px 0;
+}
+
+.hipp-form-column {
+	display: flex;
+	flex-direction: column;
+	margin: 0 15px;
+}
+
+.hipp-image-column {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	margin: 0 15px;
+}
+
+.hipp-image-column img {
+	border-radius: 6px;
+	height: auto;
+	width: 100%;
+}
+
+.hipp-form-column {
+	max-width: 920px;
+}
+
+#hipp-submit {
+	max-width: 100%;
+	width: 225px;
+}
+
+.hipp-pdf-scanner {
+	border: 1px solid #8a9694;
+	border-left: 4px solid #1f5f56;
+	border-radius: 4px;
+	margin: 20px 0 28px;
+	padding: 18px;
+}
+
+.hipp-pdf-scanner h3 {
+	color: #1f5f56;
+	font-size: 1.2rem;
+	margin: 0 0 8px;
+}
+
+.hipp-pdf-scanner > label {
+	display: block;
+	font-weight: 600;
+	margin: 16px 0 7px;
+}
+
+.hipp-pdf-scanner input[type="file"] {
+	border: 1px solid #8a9694;
+	border-radius: 4px;
+	box-sizing: border-box;
+	display: block;
+	margin-bottom: 14px;
+	padding: 8px;
+	width: 100%;
+}
+
+#hipp-pdf-scan,
+.hipp-pdf-scan-placeholder {
+	max-width: 100%;
+	width: 225px;
+}
+
+.hipp-pdf-scanner[aria-busy="true"] input,
+.hipp-pdf-scanner[aria-busy="true"] button {
+	cursor: wait;
+}
+
+.hipp-pdf-scanner .hipp-form-status {
+	margin: 14px 0 0;
+}
+
+.hipp-pdf-summary {
+	background-color: #f4f7f6;
+	border-left: 4px solid #63716f;
+	margin-top: 14px;
+	max-height: 240px;
+	overflow: auto;
+	padding: 10px 14px;
+}
+
+.hipp-pdf-summary p {
+	font-size: .9rem;
+	margin: 5px 0;
+	overflow-wrap: anywhere;
+}
+
+.hipp-submit-hint {
+	color: #a4262c;
+	display: block;
+	font-size: .79rem;
+	margin-top: 8px;
+}
+
+#hipp-form-fields fieldset {
+	border: 0;
+	border-top: 3px solid #1f5f56;
+	margin: 28px 0;
+	padding: 22px 0 0;
+}
+
+#hipp-form-fields legend {
+	color: #1f5f56;
+	font-size: 1.35rem;
+	font-weight: 700;
+	padding: 0 12px 0 0;
+}
+
+#hipp-form-fields legend.hipp-section-note {
+	color: #4c5957;
+	font-size: .79rem;
+	font-weight: 400;
+	white-space: pre-line;
+}
+
+.hipp-field {
+	margin: 0 0 20px;
+}
+
+.hipp-field > label,
+.hipp-field-note {
+	display: block;
+}
+
+.hipp-field > label {
+	font-weight: 600;
+	margin-bottom: 7px;
+}
+
+.hipp-field input:not([type="radio"]):not([type="checkbox"]),
+.hipp-field select,
+.hipp-field textarea {
+	border: 1px solid #8a9694;
+	border-radius: 4px;
+	box-sizing: border-box;
+	font-size: 1rem;
+	padding: 10px;
+	width: 100%;
+}
+
+.hipp-options {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px 24px;
+}
+
+.hipp-options label {
+	font-weight: 400;
+}
+
+.hipp-field-note {
+	color: #4c5957;
+	font-size: .79rem;
+	margin: 5px 0 8px;
+	white-space: pre-line;
+}
+
+.hipp-validation-error {
+	color: #a4262c;
+	display: block;
+	font-size: .9rem;
+	margin-top: 6px;
+}
+
+.hipp-description {
+	color: #4c5957;
+	font-size: .79rem;
+	font-weight: 400;
+	margin: 24px 0 12px;
+	white-space: pre-line;
+}
+
+.hipp-form-status {
+	border-left: 4px solid #1f5f56;
+	margin: 0 0 20px;
+	padding: 12px 16px;
+}
+
+.hipp-form-progress {
+	background-color: #e1e6e5;
+	border-radius: 4px;
+	height: 8px;
+	margin-top: 12px;
+	overflow: hidden;
+	width: 100%;
+}
+
+.hipp-form-progress-bar {
+	background-color: #1f5f56;
+	height: 100%;
+	transition: width .2s ease;
+	width: 0%;
+}
+
+.hipp-form-progress.is-busy .hipp-form-progress-bar {
+	animation: hipp-scan-progress 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes hipp-scan-progress {
+	from { transform: translateX(-70%); }
+	to { transform: translateX(180%); }
+}
+
+.hipp-form-status.is-error {
+	border-color: #a4262c;
+	color: #a4262c;
+}
+
+.hipp-form-status.is-success {
+	color: #1f5f56;
+}
+
+.hipp-form-loading {
+	color: #4c5957;
+}
+
+@media (max-width: 767px) {
+	.hipp-options {
+		display: grid;
+		gap: 10px;
+	}
+
+	.hipp-pdf-scanner {
+		padding: 14px;
+	}
+}

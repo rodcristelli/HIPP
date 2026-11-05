@@ -1,0 +1,371 @@
+"Variable / Field Name","Form Name","Section Header","Field Type","Field Label","Choices, Calculations, OR Slider Labels","Field Note","Text Validation Type OR Show Slider Number","Text Validation Min","Text Validation Max",Identifier?,"Branching Logic (Show field only if...)","Required Field?","Custom Alignment","Question Number (surveys only)","Matrix Group Name","Matrix Ranking?","Field Annotation"
+application_id,hipp_application,,text,"Application ID",,,,,,,,,,,,," @HIDDEN"
+correspondence_type,hipp_application,"Note: Correspondence Types
+-   Quarterly Paystub Submission
+-   Annual HIPP Renewal
+-   Information change
+
+You will need to remove previously uploaded old documents before uploading your current documents.
+
+When selecting ""Quarterly Paystub Submission"" or ""Information change"" you may be asked ""ERASE CURRENT VALUE OF THE FIELD ...?"".  Select ""OK"" each time that this is asked.",radio,"Correspondence Type","A, New HIPP application | P, Quarterly Paystub Submission | R, Annual HIPP Renewal | C, Information change; any change not reported in the annual renewal or paystub submission. Not applicable for new applications or  applications waiting for approval.",,,,,,,y,,,,,
+heading_1,hipp_application,,descriptive,"* * * New HIPP Application * * *
+This is a HIPP application. Please answer all questions then, at the bottom, you will be asked to upload the Insurance Plan Summary, an image of each unique insurance card (front and back), your most recent paystub, and a current Employer Insurance Verification form.
+
+Upon submission, your application will enter a queue for analyst review.  Analyst review should occur within one to three business days.  During that time, your application will be locked from further update.
+
+",,,,,,,"[correspondence_type] = 'A'",,,,,,
+heading_2,hipp_application,,descriptive,"* * * Annual HIPP Application Renewal * * *
+This is an application for renewal. Please verify the following information and make changes where necessary.  At the bottom you will be asked to upload the Insurance Plan Summary, an image of each unique insurance card (front and back), your most recent paystub, and a current Employer Insurance Verification form.
+
+Upon submission, your renewal application will enter a queue for analyst review.  Analyst review should occur within one to three business days.  During that time, your renewal application will be locked from further update.
+ &nbsp",,,,,,,"[correspondence_type] = 'R'",,,,,,
+header_3,hipp_application,,descriptive,"* * * Quarterly paystub submission * * *
+This is for the upload of your most recent paystub.   Please verify the following information and make changes where necessary.  At the bottom you will need to ""Remove"" your old paystub and upload your most recent paystub.
+
+Upon submission, your paystub submittal will enter a queue for analyst review.  Analyst review should occur within one to three business days.  During that time, this form will be locked from further update.
+ &nbsp
+    ",,,,,,,"[correspondence_type] = 'P'",,,,,,
+heading_4,hipp_application,,descriptive,"* * * Change in application information * * *
+This form contains the most recent information that you have submitted to DMAS from REDCap.  Please update any changes in your employment or personal demographics, including changes you may have already given to the HIPP analyst over the telephone.  Documents uploaded in the past have been moved into our database; no upload is needed in this change request.
+
+Upon submission, your change submittal will enter a queue for analyst review.  Analyst review should occur within one to three business days.  During that time, this form will be locked from further update.
+ &nbsp",,,,,,,"[correspondence_type] = 'C'",,,,,,
+p_email,hipp_application,,text,,,,,,,,,,,,,," @HIDDEN @USERNAME"
+hipp_number,hipp_application,,text,"HIPP Number",,,number,10000,99999,,"[correspondence_type] = 'P' or [correspondence_type] = 'R' or [correspondence_type] = 'C'",y,,,,,
+p_first_name,hipp_application,"Section 1: Personal Information of Policyholder/Employee
+
+Caution: Save your changes prior to printing; unsaved changes are lost during printing.",text,"First Name",,,,,,y,,y,,,,,
+p_middle_initial,hipp_application,,text,"Middle Initial",,,,,,y,,,,,,,
+p_last_name,hipp_application,,text,"Last Name",,,,,,y,,y,,,,,
+p_dob,hipp_application,,text,"Date of Birth",,"Please do not select ""Today"" here for the Policy Holder",date_mdy,1910-01-01,2020-12-31,,,y,,,,,
+p_medicaid,hipp_application,,radio,"Does the policy holder get Medicaid?","1, Yes | 2, No",,,,,,,y,,,p_medicaid,,
+p_medicaid_id,hipp_application,,text,"Enter the policy holder's Medicaid ID",,"The Medicaid ID number must be 12 digits",number,1,1.00E+12,y,"[p_medicaid] = '1'",y,,,,,
+p_medicare,hipp_application,,radio,"Does the policy holder get Medicare?","1, Yes | 2, No",,,,,,,y,,,p_medicare,,
+p_social_security_number,hipp_application,,text,"Social Security Number",,,number,99999,999999999,,,y,,,,,
+p_phone_home,hipp_application,,text,"Home Phone Number",,"Please include the area code without any spaces or additonal characters",number,2000000000,9999999999,,,,,,,,
+p_phone_cell,hipp_application,,text,"Cell Number",,"Please include the area code without any spaces or additonal characters",number,2000000000,9999999999,,,y,,,,,
+p_phone_work,hipp_application,,text,"Work Phone Number",,"Please include the area code without any spaces or additonal characters",number,2000000000,9999999999,,,y,,,,,
+p_address,hipp_application,,text,"Street Address",,,,,,,,y,,,,,
+p_city,hipp_application,,text,City,,,,,,,,y,,,,,
+p_state,hipp_application,,text,State,,"Please use the two letter postal abbreviation for your state  (e.g.  VA  for Virginia)",,,,,,y,,,,,
+p_zip,hipp_application,,text,"Zip Code",,"Please use your five digit zip code",number,501,99999,,,y,,,,,
+p_different_address,hipp_application,,radio,"Is the Medicaid member's address different from policyholder's address","1, Yes | 2, No",,,,,,,y,,,p_different_address,,
+m_address,hipp_application,,text,"Member's Street Address",,,,,,,"[p_different_address] = '1'",y,,,,,
+m_city,hipp_application,,text,"Member's City",,,,,,,"[p_different_address] = '1'",y,,,,,
+m_state,hipp_application,,text,"Member's State",,"Please use the two letter postal abbreviation for your state  (e.g.  VA  for Virginia)   ",,,,,"[p_different_address] = '1'",y,,,,,
+m_zip,hipp_application,,text,"Member's Zip Code",,"Please use your five digit zip code",number,501,99999,,"[p_different_address] = '1'",y,,,,,
+h_people_in_household,hipp_application,"Section 2: Household Information -  list everyone living in the household. Do not include the policy holder.",text,"Number of people living in the household, do not include the policy holder in this number.",,,number,1,15,,,y,,,,," @DEFAULT=""1"""
+h1_descriptive,hipp_application,,descriptive,"1st Person in Household",,,,,,,"[h_people_in_household] > 0",,,,,,
+h1_first_name,hipp_application,,text,"First Name",,,,,,,"[h_people_in_household] > 0",y,,,,," @DEFAULT="""""
+h1_middle_initial,hipp_application,,text,"Middle Initial",,,,,,,"[h_people_in_household] > 0",,,,,," @DEFAULT="""""
+h1_last_name,hipp_application,,text,"Last Name",,,,,,,"[h_people_in_household] > 0",y,,,,," @DEFAULT="""""
+h1_dob,hipp_application,,text,"Date of Birth",,"Please use the ""Calendar"" button to input your date of birth",date_mdy,1910-01-01,2020-12-31,,"[h_people_in_household] > 0",y,,,,," @DEFAULT="""""
+h1_relationship,hipp_application,,radio,"Relationship to Policyholder/Employee","1, Spouse | 2, Daughter | 3, Son | 4, Grand daughter | 5, Grand son | 6, Niece | 7, Nephew | 8, Step Daughter | 9, Step Son | 10, Other",,,,,,"[h_people_in_household] > 0",y,,,h1_relationship,," @DEFAULT="""""
+h1_other_relationship,hipp_application,,text,"Specify Other Relationship",,,,,,,"[h1_relationship] = '10'",y,,,,," @DEFAULT="""""
+h1_medicaid,hipp_application,,radio,"Does this person get Medicaid?","1, Yes | 2, No",,,,,y,"[h_people_in_household] > 0",y,,,h1_medicaid,," @DEFAULT="""""
+h1_medicaid_id,hipp_application,,text,"Enter Medicaid ID",,"The Medicaid ID number must be 12 digits",number,1,1.00E+12,y,"[h1_medicaid] = '1'",y,,,,," @DEFAULT="""""
+h1_medicare,hipp_application,,radio,"Does this person get Medicare?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 0",y,,,h1_medicare,," @DEFAULT="""""
+h1_insured,hipp_application,,radio,"Is this person covered under your insurance?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 0",y,,,h1_insurance,," @DEFAULT="""""
+h1_social_security_number,hipp_application,,text,"Social Security Number",,,number,99999,999999999,,"[h_people_in_household] > 0 and ([h1_medicaid]=1 or [h1_relationship]=0 or [h1_relationship]=1 or [h1_relationship]=10)",y,,,,," @DEFAULT="""""
+h2_descriptive,hipp_application,,descriptive,"2nd Person in Household",,,,,,,"[h_people_in_household] > 1",,,,,,
+h2_first_name,hipp_application,,text,"First Name",,,,,,,"[h_people_in_household] > 1",y,,,,," @DEFAULT="""""
+h2_middle_initial,hipp_application,,text,"Middle Initial",,,,,,,"[h_people_in_household] > 1",,,,,," @DEFAULT="""""
+h2_last_name,hipp_application,,text,"Last Name",,,,,,,"[h_people_in_household] > 1",y,,,,," @DEFAULT="""""
+h2_dob,hipp_application,,text,"Date of Birth",,"Please use the ""Calendar"" button to input your date of birth",date_mdy,1910-01-01,2020-12-31,,"[h_people_in_household] > 1",y,,,,," @DEFAULT="""""
+h2_relationship,hipp_application,,radio,"Relationship to Policyholder/Employee","1, Spouse | 2, Daughter | 3, Son | 4, Grand daughter | 5, Grand son | 6, Niece | 7, Nephew | 8, Step Daughter | 9, Step Son | 10, Other",,,,,,"[h_people_in_household] > 1",y,,,h2_relationship,," @DEFAULT="""""
+h2_other_relationship,hipp_application,,text,"Specify Other Relationship",,,,,,,"[h2_relationship] = '10'",y,,,,," @DEFAULT="""""
+h2_medicaid,hipp_application,,radio,"Does this person get Medicaid?","1, Yes | 2, No",,,,,y,"[h_people_in_household] > 1",y,,,h2_medicaid,," @DEFAULT="""""
+h2_medicaid_id,hipp_application,,text,"Enter Medicaid ID",,"The Medicaid ID number must be 12 digits",number,1,1.00E+12,y,"[h2_medicaid] = '1'",y,,,,," @DEFAULT="""""
+h2_medicare,hipp_application,,radio,"Does this person get Medicare?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 1",y,,,h2_medicare,," @DEFAULT="""""
+h2_insured,hipp_application,,radio,"Is this person covered under your insurance?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 1",y,,,h2_insurance,," @DEFAULT="""""
+h2_social_security_number,hipp_application,,text,"Social Security Number",,,number,99999,999999999,,"[h_people_in_household] > 1 and ([h2_medicaid]=1 or [h2_relationship]=0 or [h2_relationship]=1 or [h2_relationship]=10)",y,,,,," @DEFAULT="""""
+h3_descriptive,hipp_application,,descriptive,"3rd Person in Household",,,,,,,"[h_people_in_household] > 2",,,,,," @DEFAULT="""""
+h3_first_name,hipp_application,,text,"First Name",,,,,,,"[h_people_in_household] > 2",y,,,,," @DEFAULT="""""
+h3_middle_initial,hipp_application,,text,"Middle Initial",,,,,,,"[h_people_in_household] > 2",,,,,," @DEFAULT="""""
+h3_last_name,hipp_application,,text,"Last Name",,,,,,,"[h_people_in_household] > 2",y,,,,," @DEFAULT="""""
+h3_dob,hipp_application,,text,"Date of Birth",,"Please use the ""Calendar"" button to input your date of birth",date_mdy,1910-01-01,2020-12-31,,"[h_people_in_household] > 2",y,,,,," @DEFAULT="""""
+h3_relationship,hipp_application,,radio,"Relationship to Policyholder/Employee","1, Spouse | 2, Daughter | 3, Son | 4, Grand daughter | 5, Grand son | 6, Niece | 7, Nephew | 8, Step Daughter | 9, Step Son | 10, Other",,,,,,"[h_people_in_household] > 2",y,,,h3_relationship,," @DEFAULT="""""
+h3_other_relationship,hipp_application,,text,"Specify Other Relationship",,,,,,,"[h3_relationship] = '10'",y,,,,," @DEFAULT="""""
+h3_medicaid,hipp_application,,radio,"Does this person get Medicaid?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 2",y,,,h3_medicaid,," @DEFAULT="""""
+h3_medicaid_id,hipp_application,,text,"Enter Medicaid ID",,"The Medicaid ID number must be 12 digits",number,1,1.00E+12,y,"[h3_medicaid] = '1'",y,,,,," @DEFAULT="""""
+h3_medicare,hipp_application,,radio,"Does this person get Medicare?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 2",y,,,h3_medicare,," @DEFAULT="""""
+h3_insured,hipp_application,,radio,"Is this person covered under your insurance?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 2",y,,,h3_insurance,," @DEFAULT="""""
+h3_social_security_number,hipp_application,,text,"Social Security Number",,,number,99999,999999999,,"[h_people_in_household] > 2 and ([h3_medicaid]=1 or [h3_relationship]=0 or [h3_relationship]=1 or [h3_relationship]=10)",y,,,,," @DEFAULT="""""
+h4_descriptive,hipp_application,,descriptive,"4th Person in Household",,,,,,,"[h_people_in_household] > 3",,,,,," @DEFAULT="""""
+h4_first_name,hipp_application,,text,"First Name",,,,,,,"[h_people_in_household] > 3",y,,,,," @DEFAULT="""""
+h4_middle_initial,hipp_application,,text,"Middle Initial",,,,,,,"[h_people_in_household] > 3",,,,,," @DEFAULT="""""
+h4_last_name,hipp_application,,text,"Last Name",,,,,,,"[h_people_in_household] > 3",y,,,,," @DEFAULT="""""
+h4_dob,hipp_application,,text,"Date of Birth",,"Please use the ""Calendar"" button to input your date of birth",date_mdy,,,,"[h_people_in_household] > 3",y,,,,," @DEFAULT="""""
+h4_relationship,hipp_application,,radio,"Relationship to Policyholder/Employee","1, Spouse | 2, Daughter | 3, Son | 4, Grand daughter | 5, Grand son | 6, Niece | 7, Nephew | 8, Step Daughter | 9, Step Son | 10, Other",,,,,,"[h_people_in_household] > 3",y,,,h4_relationship,," @DEFAULT="""""
+h4_other_relationship,hipp_application,,text,"Specify Other Relationship",,,,,,,"[h4_relationship] = '10'",y,,,,," @DEFAULT="""""
+h4_medicaid,hipp_application,,radio,"Does this person get Medicaid?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 3",y,,,h4_medicaid,," @DEFAULT="""""
+h4_medicaid_id,hipp_application,,text,"Enter Medicaid ID",,"The Medicaid ID number must be 12 digits",number,1,1.00E+12,y,"[h4_medicaid] = '1'",y,,,,," @DEFAULT="""""
+h4_medicare,hipp_application,,radio,"Does this person get Medicare?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 3",y,,,h4_medicare,," @DEFAULT="""""
+h4_insured,hipp_application,,radio,"Is this person covered under your insurance?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 3",y,,,h4_insurance,," @DEFAULT="""""
+h4_social_security_number,hipp_application,,text,"Social Security Number",,,number,99999,999999999,,"[h_people_in_household] > 3 and ([h4_medicaid]=1 or [h4_relationship]=0 or [h4_relationship]=1 or [h4_relationship]=10)",y,,,,," @DEFAULT="""""
+h5_descriptive,hipp_application,,descriptive,"5th Person in Household",,,,,,,"[h_people_in_household] > 4",,,,,," @DEFAULT="""""
+h5_first_name,hipp_application,,text,"First Name",,,,,,,"[h_people_in_household] > 4",y,,,,," @DEFAULT="""""
+h5_middle_initial,hipp_application,,text,"Middle Initial",,,,,,,"[h_people_in_household] > 4",,,,,," @DEFAULT="""""
+h5_last_name,hipp_application,,text,"Last Name",,,,,,,"[h_people_in_household] > 4",y,,,,," @DEFAULT="""""
+h5_dob,hipp_application,,text,"Date of Birth",,"Please use the ""Calendar"" button to input your date of birth",date_mdy,,,,"[h_people_in_household] > 4",y,,,,," @DEFAULT="""""
+h5_relationship,hipp_application,,radio,"Relationship to Policyholder/Employee","1, Spouse | 2, Daughter | 3, Son | 4, Grand daughter | 5, Grand son | 6, Niece | 7, Nephew | 8, Step Daughter | 9, Step Son | 10, Other",,,,,,"[h_people_in_household] > 4",y,,,h5_relationship,," @DEFAULT="""""
+h5_other_relationship,hipp_application,,text,"Specify Other Relationship",,,,,,,"[h5_relationship] = '10'",y,,,,," @DEFAULT="""""
+h5_medicaid,hipp_application,,radio,"Does this person get Medicaid?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 4",y,,,h5_medicaid,," @DEFAULT="""""
+h5_medicaid_id,hipp_application,,text,"Enter Medicaid ID",,"The Medicaid ID number must be 12 digits",number,1,1.00E+12,y,"[h5_medicaid] = '1'",y,,,,," @DEFAULT="""""
+h5_medicare,hipp_application,,radio,"Does this person get Medicare?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 4",y,,,h5_medicare,," @DEFAULT="""""
+h5_insured,hipp_application,,radio,"Is this person covered under your insurance?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 4",y,,,h5_insurance,," @DEFAULT="""""
+h5_social_security_number,hipp_application,,text,"Social Security Number",,,number,99999,999999999,,"[h_people_in_household] > 4 and ([h5_medicaid]=1 or [h5_relationship]=0 or [h5_relationship]=1 or [h5_relationship]=10)",y,,,,," @DEFAULT="""""
+h6_descriptive,hipp_application,,descriptive,"6th Person in Household",,,,,,,"[h_people_in_household] > 5",,,,,," @DEFAULT="""""
+h6_first_name,hipp_application,,text,"First Name",,,,,,,"[h_people_in_household] > 5",y,,,,," @DEFAULT="""""
+h6_middle_initial,hipp_application,,text,"Middle Initial",,,,,,,"[h_people_in_household] > 5",,,,,," @DEFAULT="""""
+h6_last_name,hipp_application,,text,"Last Name",,,,,,,"[h_people_in_household] > 5",y,,,,," @DEFAULT="""""
+h6_dob,hipp_application,,text,"Date of Birth",,"Please use the ""Calendar"" button to input your date of birth",date_mdy,,,,"[h_people_in_household] > 5",y,,,,," @DEFAULT="""""
+h6_relationship,hipp_application,,radio,"Relationship to Policyholder/Employee","1, Spouse | 2, Daughter | 3, Son | 4, Grand daughter | 5, Grand son | 6, Niece | 7, Nephew | 8, Step Daughter | 9, Step Son | 10, Other",,,,,,"[h_people_in_household] > 5",y,,,h6_relationship,," @DEFAULT="""""
+h6_other_relationship,hipp_application,,text,"Specify Other Relationship",,,,,,,"[h6_relationship] = '10'",y,,,,," @DEFAULT="""""
+h6_medicaid,hipp_application,,radio,"Does this person get Medicaid?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 5",y,,,h6_medicaid,," @DEFAULT="""""
+h6_medicaid_id,hipp_application,,text,"Enter Medicaid ID",,"The Medicaid ID number must be 12 digits",number,1,1.00E+12,y,"[h6_medicaid] = '1'",y,,,,," @DEFAULT="""""
+h6_medicare,hipp_application,,radio,"Does this person get Medicare?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 5",y,,,h6_medicare,," @DEFAULT="""""
+h6_insured,hipp_application,,radio,"Is this person covered under your insurance?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 5",y,,,h6_insurance,," @DEFAULT="""""
+h6_social_security_number,hipp_application,,text,"Social Security Number",,,number,99999,999999999,,"[h_people_in_household] > 5 and ([h6_medicaid]=1 or [h6_relationship]=0 or [h6_relationship]=1 or [h6_relationship]=10)",y,,,,," @DEFAULT="""""
+h7_descriptive,hipp_application,,descriptive,"7th Person in Household",,,,,,,"[h_people_in_household] > 6",,,,,," @DEFAULT="""""
+h7_first_name,hipp_application,,text,"First Name",,,,,,,"[h_people_in_household] > 6",y,,,,," @DEFAULT="""""
+h7_middle_initial,hipp_application,,text,"Middle Initial",,,,,,,"[h_people_in_household] > 6",,,,,," @DEFAULT="""""
+h7_last_name,hipp_application,,text,"Last Name",,,,,,,"[h_people_in_household] > 6",y,,,,," @DEFAULT="""""
+h7_dob,hipp_application,,text,"Date of Birth",,"Please use the ""Calendar"" button to input your date of birth",date_mdy,,,,"[h_people_in_household] > 6",y,,,,," @DEFAULT="""""
+h7_relationship,hipp_application,,radio,"Relationship to Policyholder/Employee","1, Spouse | 2, Daughter | 3, Son | 4, Grand daughter | 5, Grand son | 6, Niece | 7, Nephew | 8, Step Daughter | 9, Step Son | 10, Other",,,,,,"[h_people_in_household] > 6",y,,,h7_relationship,," @DEFAULT="""""
+h7_other_relationship,hipp_application,,text,"Specify Other Relationship",,,,,,,"[h7_relationship] = '10'",y,,,,," @DEFAULT="""""
+h7_medicaid,hipp_application,,radio,"Does this person get Medicaid?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 6",y,,,h7_medicaid,," @DEFAULT="""""
+h7_medicaid_id,hipp_application,,text,"Enter Medicaid ID",,"The Medicaid ID number must be 12 digits",number,1,1.00E+12,y,"[h7_medicaid] = '1'",y,,,,," @DEFAULT="""""
+h7_medicare,hipp_application,,radio,"Does this person get Medicare?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 6",y,,,h7_medicare,," @DEFAULT="""""
+h7_insured,hipp_application,,radio,"Is this person covered under your insurance?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 6",y,,,h7_insurance,," @DEFAULT="""""
+h7_social_security_number,hipp_application,,text,"Social Security Number",,,number,99999,999999999,,"[h_people_in_household] > 6 and ([h7_medicaid]=1 or [h7_relationship]=0 or [h7_relationship]=1 or [h7_relationship]=10)",y,,,,," @DEFAULT="""""
+h8_descriptive,hipp_application,,descriptive,"8th Person in Household",,,,,,,"[h_people_in_household] > 7",,,,,," @DEFAULT="""""
+h8_first_name,hipp_application,,text,"First Name",,,,,,,"[h_people_in_household] > 7",y,,,,," @DEFAULT="""""
+h8_middle_initial,hipp_application,,text,"Middle Initial",,,,,,,"[h_people_in_household] > 7",,,,,," @DEFAULT="""""
+h8_last_name,hipp_application,,text,"Last Name",,,,,,,"[h_people_in_household] > 7",y,,,,," @DEFAULT="""""
+h8_dob,hipp_application,,text,"Date of Birth",,"Please use the ""Calendar"" button to input your date of birth",date_mdy,,,,"[h_people_in_household] > 7",y,,,,," @DEFAULT="""""
+h8_relationship,hipp_application,,radio,"Relationship to Policyholder/Employee","1, Spouse | 2, Daughter | 3, Son | 4, Grand daughter | 5, Grand son | 6, Niece | 7, Nephew | 8, Step Daughter | 9, Step Son | 10, Other",,,,,,"[h_people_in_household] > 7",y,,,h8_relationship,," @DEFAULT="""""
+h8_other_relationship,hipp_application,,text,"Specify Other Relationship",,,,,,,"[h8_relationship] = '10'",y,,,,," @DEFAULT="""""
+h8_medicaid,hipp_application,,radio,"Does this person get Medicaid?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 7",y,,,h8_medicaid,," @DEFAULT="""""
+h8_medicaid_id,hipp_application,,text,"Enter Medicaid ID",,"The Medicaid ID number must be 12 digits",number,1,1.00E+12,y,"[h8_medicaid] = '1'",y,,,,," @DEFAULT="""""
+h8_medicare,hipp_application,,radio,"Does this person get Medicare?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 7",y,,,h8_medicare,," @DEFAULT="""""
+h8_insured,hipp_application,,radio,"Is this person covered under your insurance?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 7",y,,,h8_insurance,," @DEFAULT="""""
+h8_social_security_number,hipp_application,,text,"Social Security Number",,,number,99999,999999999,,"[h_people_in_household] > 7 and ([h8_medicaid]=1 or [h8_relationship]=0 or [h8_relationship]=1 or [h8_relationship]=10)",y,,,,," @DEFAULT="""""
+h9_descriptive,hipp_application,,descriptive,"9th Person in Household",,,,,,,"[h_people_in_household] > 8",,,,,," @DEFAULT="""""
+h9_first_name,hipp_application,,text,"First Name",,,,,,,"[h_people_in_household] > 8",y,,,,," @DEFAULT="""""
+h9_middle_initial,hipp_application,,text,"Middle Initial",,,,,,,"[h_people_in_household] > 8",,,,,," @DEFAULT="""""
+h9_last_name,hipp_application,,text,"Last Name",,,,,,,"[h_people_in_household] > 8",y,,,,," @DEFAULT="""""
+h9_dob,hipp_application,,text,"Date of Birth",,"Please use the ""Calendar"" button to input your date of birth",date_mdy,,,,"[h_people_in_household] > 8",y,,,,," @DEFAULT="""""
+h9_relationship,hipp_application,,radio,"Relationship to Policyholder/Employee","1, Spouse | 2, Daughter | 3, Son | 4, Grand daughter | 5, Grand son | 6, Niece | 7, Nephew | 8, Step Daughter | 9, Step Son | 10, Other",,,,,,"[h_people_in_household] > 8",y,,,h9_relationship,," @DEFAULT="""""
+h9_other_relationship,hipp_application,,text,"Specify Other Relationship",,,,,,,"[h9_relationship] = '10'",y,,,,," @DEFAULT="""""
+h9_medicaid,hipp_application,,radio,"Does this person get Medicaid?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 8",y,,,h9_medicaid,," @DEFAULT="""""
+h9_medicaid_id,hipp_application,,text,"Enter Medicaid ID",,"The Medicaid ID number must be 12 digits",number,1,1.00E+12,y,"[h9_medicaid] = '1'",y,,,,," @DEFAULT="""""
+h9_medicare,hipp_application,,radio,"Does this person get Medicare?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 8",y,,,h9_medicare,," @DEFAULT="""""
+h9_insured,hipp_application,,radio,"Is this person covered under your insurance?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 8",y,,,h9_insurance,," @DEFAULT="""""
+h9_social_security_number,hipp_application,,text,"Social Security Number",,,number,99999,999999999,,"[h_people_in_household] > 8 and ([h9_medicaid]=1 or [h9_relationship]=0 or [h9_relationship]=1 or [h9_relationship]=10)",y,,,,," @DEFAULT="""""
+h10_descriptive,hipp_application,,descriptive,"10th Person in Household",,,,,,,"[h_people_in_household] > 9",,,,,," @DEFAULT="""""
+h10_first_name,hipp_application,,text,"First Name",,,,,,,"[h_people_in_household] > 9",y,,,,," @DEFAULT="""""
+h10_middle_initial,hipp_application,,text,"Middle Initial",,,,,,,"[h_people_in_household] > 9",,,,,," @DEFAULT="""""
+h10_last_name,hipp_application,,text,"Last Name",,,,,,,"[h_people_in_household] > 9",y,,,,," @DEFAULT="""""
+h10_dob,hipp_application,,text,"Date of Birth",,"Please use the ""Calendar"" button to input your date of birth",date_mdy,,,,"[h_people_in_household] > 9",y,,,,," @DEFAULT="""""
+h10_relationship,hipp_application,,radio,"Relationship to Policyholder/Employee","1, Spouse | 2, Daughter | 3, Son | 4, Grand daughter | 5, Grand son | 6, Niece | 7, Nephew | 8, Step Daughter | 9, Step Son | 10, Other",,,,,,"[h_people_in_household] > 9",y,,,h10_relationship,," @DEFAULT="""""
+h10_other_relationship,hipp_application,,text,"Specify Other Relationship",,,,,,,"[h10_relationship] = '10'",y,,,,," @DEFAULT="""""
+h10_medicaid,hipp_application,,radio,"Does this person get Medicaid?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 9",y,,,h10_medicaid,," @DEFAULT="""""
+h10_medicaid_id,hipp_application,,text,"Enter Medicaid ID",,"The Medicaid ID number must be 12 digits",number,1,1.00E+12,y,"[h10_medicaid] = '1'",y,,,,," @DEFAULT="""""
+h10_medicare,hipp_application,,radio,"Does this person get Medicare?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 9",y,,,h10_medicare,," @DEFAULT="""""
+h10_insured,hipp_application,,radio,"Is this person covered under your insurance?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 9",y,,,h10_insurance,," @DEFAULT="""""
+h10_social_security_number,hipp_application,,text,"Last four digits of Social Security Number",,,number,1,9999,,"[h_people_in_household] > 9 and ([h10_medicaid]=1 or [h10_relationship]=0 or [h10_relationship]=1 or [h10_relationship]=10)",y,,,,," @DEFAULT="""""
+h11_descriptive,hipp_application,,descriptive,"11th Person in Household",,,,,,,"[h_people_in_household] > 10",,,,,," @DEFAULT="""""
+h11_first_name,hipp_application,,text,"First Name",,,,,,,"[h_people_in_household] > 10",y,,,,," @DEFAULT="""""
+h11_middle_initial,hipp_application,,text,"Middle Initial",,,,,,,"[h_people_in_household] > 10",,,,,," @DEFAULT="""""
+h11_last_name,hipp_application,,text,"Last Name",,,,,,,"[h_people_in_household] > 10",y,,,,," @DEFAULT="""""
+h11_dob,hipp_application,,text,"Date of Birth",,"Please use the ""Calendar"" button to input your date of birth",date_mdy,,,,"[h_people_in_household] > 10",y,,,,," @DEFAULT="""""
+h11_relationship,hipp_application,,radio,"Relationship to Policyholder/Employee","1, Spouse | 2, Daughter | 3, Son | 4, Grand daughter | 5, Grand son | 6, Niece | 7, Nephew | 8, Step Daughter | 9, Step Son | 10, Other",,,,,,"[h_people_in_household] > 10",y,,,h11_relationship,," @DEFAULT="""""
+h11_other_relationship,hipp_application,,text,"Specify Other Relationship",,,,,,,"[h11_relationship] = '10'",y,,,,," @DEFAULT="""""
+h11_medicaid,hipp_application,,radio,"Does this person get Medicaid?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 10",y,,,h11_medicaid,," @DEFAULT="""""
+h11_medicaid_id,hipp_application,,text,"Enter Medicaid ID",,"The Medicaid ID number must be 12 digits",number,1,1.00E+12,y,"[h11_medicaid] = '1'",y,,,,," @DEFAULT="""""
+h11_medicare,hipp_application,,radio,"Does this person get Medicare?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 10",y,,,h11_medicare,," @DEFAULT="""""
+h11_insured,hipp_application,,radio,"Is this person covered under your insurance?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 10",y,,,h11_insurance,," @DEFAULT="""""
+h11_social_security_number,hipp_application,,text,"Social Security Number",,,number,99999,999999999,,"[h_people_in_household] > 10 and ([h11_medicaid]=1 or [h11_relationship]=0 or [h11_relationship]=1 or [h11_relationship]=10)",y,,,,," @DEFAULT="""""
+h12_descriptive,hipp_application,,descriptive,"12th Person in Household",,,,,,,"[h_people_in_household] > 11",,,,,," @DEFAULT="""""
+h12_first_name,hipp_application,,text,"First Name",,,,,,,"[h_people_in_household] > 11",y,,,,," @DEFAULT="""""
+h12_middle_initial,hipp_application,,text,"Middle Initial",,,,,,,"[h_people_in_household] > 11",,,,,," @DEFAULT="""""
+h12_last_name,hipp_application,,text,"Last Name",,,,,,,"[h_people_in_household] > 11",y,,,,," @DEFAULT="""""
+h12_dob,hipp_application,,text,"Date of Birth",,"Please use the ""Calendar"" button to input your date of birth",date_mdy,,,,"[h_people_in_household] > 11",y,,,,," @DEFAULT="""""
+h12_relationship,hipp_application,,radio,"Relationship to Policyholder/Employee","1, Spouse | 2, Daughter | 3, Son | 4, Grand daughter | 5, Grand son | 6, Niece | 7, Nephew | 8, Step Daughter | 9, Step Son | 10, Other",,,,,,"[h_people_in_household] > 11",y,,,h12_relationship,," @DEFAULT="""""
+h12_other_relationship,hipp_application,,text,"Specify Other Relationship",,,,,,,"[h12_relationship] = '10'",y,,,,," @DEFAULT="""""
+h12_medicaid,hipp_application,,radio,"Does this person get Medicaid?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 11",y,,,h12_medicaid,," @DEFAULT="""""
+h12_medicaid_id,hipp_application,,text,"Enter Medicaid ID",,"The Medicaid ID number must be 12 digits",number,1,1.00E+12,y,"[h12_medicaid] = '1'",y,,,,," @DEFAULT="""""
+h12_medicare,hipp_application,,radio,"Does this person get Medicare?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 11",y,,,h12_medicare,," @DEFAULT="""""
+h12_insured,hipp_application,,radio,"Is this person covered under your insurance?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 11",y,,,h12_insurance,," @DEFAULT="""""
+h12_social_security_number,hipp_application,,text,"Social Security Number",,,number,99999,999999999,,"[h_people_in_household] > 11 and ([h12_medicaid]=1 or [h12_relationship]=0 or [h12_relationship]=1 or [h12_relationship]=10)",y,,,,," @DEFAULT="""""
+h13_descriptive,hipp_application,,descriptive,"13th Person in Household",,,,,,,"[h_people_in_household] > 12",,,,,," @DEFAULT="""""
+h13_first_name,hipp_application,,text,"First Name",,,,,,,"[h_people_in_household] > 12",y,,,,," @DEFAULT="""""
+h13_middle_initial,hipp_application,,text,"Middle Initial",,,,,,,"[h_people_in_household] > 12",,,,,," @DEFAULT="""""
+h13_last_name,hipp_application,,text,"Last Name",,,,,,,"[h_people_in_household] > 12",y,,,,," @DEFAULT="""""
+h13_dob,hipp_application,,text,"Date of Birth",,"Please use the ""Calendar"" button to input your date of birth",date_mdy,,,,"[h_people_in_household] > 12",y,,,,," @DEFAULT="""""
+h13_relationship,hipp_application,,radio,"Relationship to Policyholder/Employee","1, Spouse | 2, Daughter | 3, Son | 4, Grand daughter | 5, Grand son | 6, Niece | 7, Nephew | 8, Step Daughter | 9, Step Son | 10, Other",,,,,,"[h_people_in_household] > 12",y,,,h13_relationship,," @DEFAULT="""""
+h13_other_relationship,hipp_application,,text,"Specify Other Relationship",,,,,,,"[h13_relationship] = '10'",y,,,,," @DEFAULT="""""
+h13_medicaid,hipp_application,,radio,"Does this person get Medicaid?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 12",y,,,h13_medicaid,," @DEFAULT="""""
+h13_medicaid_id,hipp_application,,text,"Enter Medicaid ID",,"The Medicaid ID number must be 12 digits",number,1,1.00E+12,y,"[h13_medicaid] = '1'",y,,,,," @DEFAULT="""""
+h13_medicare,hipp_application,,radio,"Does this person get Medicare?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 12",y,,,h13_medicare,," @DEFAULT="""""
+h13_insured,hipp_application,,radio,"Is this person covered under your insurance?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 12",y,,,h13_insurance,," @DEFAULT="""""
+h13_social_security_number,hipp_application,,text,"Social Security Number",,,number,99999,999999999,,"[h_people_in_household] > 12 and ([h13_medicaid]=1 or [h13_relationship]=0 or [h13_relationship]=1 or [h13_relationship]=10)",y,,,,," @DEFAULT="""""
+h14_descriptive,hipp_application,,descriptive,"14th Person in Household",,,,,,,"[h_people_in_household] > 13",,,,,," @DEFAULT="""""
+h14_first_name,hipp_application,,text,"First Name",,,,,,,"[h_people_in_household] > 13",y,,,,," @DEFAULT="""""
+h14_middle_initial,hipp_application,,text,"Middle Initial",,,,,,,"[h_people_in_household] > 13",,,,,," @DEFAULT="""""
+h14_last_name,hipp_application,,text,"Last Name",,,,,,,"[h_people_in_household] > 13",y,,,,," @DEFAULT="""""
+h14_dob,hipp_application,,text,"Date of Birth",,"Please use the ""Calendar"" button to input your date of birth",date_mdy,,,,"[h_people_in_household] > 13",y,,,,," @DEFAULT="""""
+h14_relationship,hipp_application,,radio,"Relationship to Policyholder/Employee","1, Spouse | 2, Daughter | 3, Son | 4, Grand daughter | 5, Grand son | 6, Niece | 7, Nephew | 8, Step Daughter | 9, Step Son | 10, Other",,,,,,"[h_people_in_household] > 13",y,,,h14_relationship,," @DEFAULT="""""
+h14_other_relationship,hipp_application,,text,"Specify Other Relationship",,,,,,,"[h14_relationship] = '10'",y,,,,," @DEFAULT="""""
+h14_medicaid,hipp_application,,radio,"Does this person get Medicaid?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 13",y,,,h14_medicaid,," @DEFAULT="""""
+h14_medicaid_id,hipp_application,,text,"Enter Medicaid ID",,"The Medicaid ID number must be 12 digits",number,1,1.00E+12,y,"[h14_medicaid] = '1'",y,,,,," @DEFAULT="""""
+h14_medicare,hipp_application,,radio,"Does this person get Medicare?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 13",y,,,h14_medicare,," @DEFAULT="""""
+h14_insured,hipp_application,,radio,"Is this person covered under your insurance?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 13",y,,,h14_insurance,," @DEFAULT="""""
+h14_social_security_number,hipp_application,,text,"Social Security Number",,,number,99999,999999999,,"[h_people_in_household] > 13 and ([h14_medicaid]=1 or [h14_relationship]=0 or [h14_relationship]=1 or [h14_relationship]=10)",y,,,,," @DEFAULT="""""
+h15_descriptive,hipp_application,,descriptive,"15th Twelfth Person in Household",,,,,,,"[h_people_in_household] > 14",,,,,," @DEFAULT="""""
+h15_first_name,hipp_application,,text,"First Name",,,,,,,"[h_people_in_household] > 14",y,,,,," @DEFAULT="""""
+h15_middle_initial,hipp_application,,text,"Middle Initial",,,,,,,"[h_people_in_household] > 14",,,,,," @DEFAULT="""""
+h15_last_name,hipp_application,,text,"Last Name",,,,,,,"[h_people_in_household] > 14",y,,,,," @DEFAULT="""""
+h15_dob,hipp_application,,text,"Date of Birth",,"Please use the ""Calendar"" button to input your date of birth",date_mdy,,,,"[h_people_in_household] > 14",y,,,,," @DEFAULT="""""
+h15_relationship,hipp_application,,radio,"Relationship to Policyholder/Employee","1, Spouse | 2, Daughter | 3, Son | 4, Grand daughter | 5, Grand son | 6, Niece | 7, Nephew | 8, Step Daughter | 9, Step Son | 10, Other",,,,,,"[h_people_in_household] > 14",y,,,h15_relationship,," @DEFAULT="""""
+h15_other_relationship,hipp_application,,text,"Specify Other Relationship",,,,,,,"[h15_relationship] = '10'",y,,,,," @DEFAULT="""""
+h15_medicaid,hipp_application,,radio,"Does this person get Medicaid?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 14",y,,,h15_medicaid,," @DEFAULT="""""
+h15_medicaid_id,hipp_application,,text,"Enter Medicaid ID",,"The Medicaid ID number must be 12 digits",number,1,1.00E+12,y,"[h15_medicaid] = '1'",y,,,,," @DEFAULT="""""
+h15_medicare,hipp_application,,radio,"Does this person get Medicare?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 14",y,,,h15_medicare,," @DEFAULT="""""
+h15_insured,hipp_application,,radio,"Is this person covered under your insurance?","1, Yes | 2, No",,,,,,"[h_people_in_household] > 14",y,,,h15_insurance,," @DEFAULT="""""
+h15_social_security_number,hipp_application,,text,"Social Security Number",,,number,99999,999999999,,"[h_people_in_household] > 14 and ([h15_medicaid]=1 or [h15_relationship]=0 or [h15_relationship]=1 or [h15_relationship]=10)",y,,,,," @DEFAULT="""""
+e_status,hipp_application,"Section 3: Employer/Company Information",radio,"Employee Status","1, Full-Time | 2, Part-Time",,,,,,,y,,,e_status,,
+e_hired_date,hipp_application,,text,"Date Hired",,,date_mdy,1970-01-01,2030-12-31,,,y,,,,,
+e_retired,hipp_application,,radio,"Retired from previous_employment?","1, Yes | 2, No",,,,,,,y,,,e_retired,,
+e_school_employee,hipp_application,,radio,"School Employee","1, Yes | 2, No",,,,,,,y,,,e_school_employee,,
+e_contract_year,hipp_application,,radio,"School employee contract year","1, 10-Month | 2, 11-Month | 3, 12-month",,,,,,"[e_school_employee] = '1'",y,,,e_contract_year,,
+e_school_premium_schedule,hipp_application,,radio,"School employee premiums deductions","1, over 10 months | 2, over 11 months | 3, throughout the school year",,,,,,"[e_school_employee] = '1'",y,,,e_school_premium_schedule,,
+e_hr_representative,hipp_application,,text,"Human Resources Representative or Benefits Manager's name",,,,,,,,y,,,,,
+e_hr_rep_title,hipp_application,,text,"Human Resources Representative or Benefits Manager's Title",,,,,,,,,,,,,
+e_representative_phone,hipp_application,,text,"Representative's Phone Number",,"Please include the area code without any spaces or additional characters",number,1000000000,9999999999,,,y,,,,,
+e_employer,hipp_application,,text,"Employer/Company Name",,,,,,,,y,,,,,
+e_address,hipp_application,,text,"Employer/Company Street Address",,,,,,,,y,,,,,
+e_city,hipp_application,,text,"Employer City",,,,,,,,y,,,,,
+e_state,hipp_application,,text,"Employer State",,"Please use the two letter postal abbreviation for your state  (e.g.  VA  for Virginia)   ",,,,,,y,,,,,
+e_zip,hipp_application,,text,"Employer Zip Code",,"Please use a five digit zip code",number,501,99999,,,y,,,,,
+e_employee_ins_nbr,hipp_application,,text,"Employer/Subscriber Insurance Policy Number",,,,,,,,y,,,,,
+e_ins_plan_type,hipp_application,,radio,"Insurance Plan Type","1, Employer Plan | 2, COBRA | 3, Individual Policy | 4, Self Employed | 5, None",,,,,,,y,,,e_ins_plan_type,,
+insurance_plan_type_none_i,hipp_application,,descriptive,"Insurance Plan Type ""None"" indicates no employer insurance and no premium; therefore you are not a candidate for the HIPP program.  Discontinue application.",,,,,,,"[e_ins_plan_type] = '5'",,,,,,
+e_self_employed,hipp_application,,radio,"Is the Policyholder self employed?","1, Yes | 2, No",,,,,,"[e_ins_plan_type] = '3'",y,,,e_self_employed,,
+e_insurance_coverage,hipp_application,,checkbox,"Services Covered Under the Health Plan","1, Medical | 2, Pharmacy | 3, Dental | 4, Vision",,,,,,,y,,,e_insurance_coverage,,
+e_medical_coverage,hipp_application,,radio,"Medical Coverage","1, Employee only | 2, Employee + Spouse | 3, Employee + Child | 4, Employee + Children | 5, Family | 6, Other",,,,,,"[e_insurance_coverage(1)] = '1'",y,,,e_medical_coverage,y,
+e_medical_coverage_other,hipp_application,,text,"Medical Coverage Other",,,,,,,"[e_medical_coverage] = '6'",y,RH,,,,
+e_pharmacy_coverage,hipp_application,,radio,"Pharmaceutical Coverage","1, Employee only | 2, Employee + Spouse | 3, Employee + Child | 4, Employee + Children | 5, Family | 6, Other",,,,,,"[e_insurance_coverage(2)] = '1'",y,,,e_pharmacy_coverage,y,
+e_pharmacy_coverage_other,hipp_application,,text,"Pharmaceutical Coverage Other",,,,,,,"[e_pharmacy_coverage] = '6'",y,RH,,,,
+e_dental_coverage,hipp_application,,radio,"Dental Coverage","1, Employee only | 2, Employee + Spouse | 3, Employee + Child | 4, Employee + Children | 5, Family | 6, Other",,,,,,"[e_insurance_coverage(3)] = '1'",y,,,e_dental_coverage,y,
+e_dental_coverage_other,hipp_application,,text,"Dental Coverage Other",,,,,,,"[e_dental_coverage] = '6'",y,RH,,,,
+e_vision_coverage,hipp_application,,radio,"Vision Coverage","1, Employee only | 2, Employee + Spouse | 3, Employee + Child | 4, Employee + Children | 5, Family | 6, Other",,,,,,"[e_insurance_coverage(4)] = '1'",y,,,e_vision_coverage,y,
+e_vision_coverage_other,hipp_application,,text,"Vision Coverage Other",,,,,,,"[e_vision_coverage] = '6'",y,RH,,,,
+e_type_of_health_plan,hipp_application,,radio,"Type of Health Plan","1, Comprehensive Major Medical | 2, HMO | 3, PPO | 4, Hospital | 5, Other",,,,,,,y,,,e_type_of_health_plan,,
+e_other_health_plan,hipp_application,,text,"Enter Other Type of Health Plan ",,,,,,,"[e_type_of_health_plan] = '5'",y,,,,,
+e_insurance_effective_dt,hipp_application,,text,"Insurance effective date",,"This information can be found on your Insurance Card  or Plan Summary",date_mdy,,,,,y,,,,,
+e_open_enroll_from,hipp_application,,text,"Open-enrollment From Date (must be greater than ""Insurance effective date"").",,"This information should be available from your employer",date_mdy,2017-01-01,2030-12-31,,,y,,,,,
+e_open_enroll_thru,hipp_application,,text,"Open-enrollment To Date",,"This information should be available from your employer",date_mdy,2017-01-01,2030-12-31,,,y,,,,,
+e_descriptive_01,hipp_application,,descriptive," ",,,,,,,"[e_insurance_coverage(1)] = '1'",,,,,,
+e_descriptive_02,hipp_application,,descriptive,"--- Medical Insurance Company Information ---",,,,,,,"[e_insurance_coverage(1)] = '1'",,,,,,
+e_medical_ins_name,hipp_application,,text,"Medical Insurance Company Name",,,,,,,"[e_insurance_coverage(1)] = '1'",y,,,,,
+e_medical_ins_address1,hipp_application,,text,"Medical Insurance Company address line 1",,,,,,,"[e_insurance_coverage(1)] = '1'",y,,,,,
+e_medical_ins_address2,hipp_application,,text,"Medical Insurance Company address line 2",,,,,,,"[e_insurance_coverage(1)] = '1'",,,,,,
+e_medical_ins_city,hipp_application,,text,"Medical Insurance Company city",,,,,,,"[e_insurance_coverage(1)] = '1'",y,,,,,
+e_medical_ins_state,hipp_application,,text,"Medical Insurance Company state",,"Please use the two letter postal abbreviation for the state  (e.g.  VA  for Virginia)   ",,,,,"[e_insurance_coverage(1)] = '1'",y,,,,,
+e_medical_ins_zip,hipp_application,,text,"Medical Insurance Company zip code",,"Please use a five digit zip code",number,501,99999,,"[e_insurance_coverage(1)] = '1'",y,,,,,
+e_medical_ins_phone,hipp_application,,text,"Medical Insurance Company Phone Number",,"Please include the area code without any spaces or additional characters",number,2000000000,9999999999,,"[e_insurance_coverage(1)] = '1'",y,,,,,
+e_medical_group_nbr,hipp_application,,text,"Medical Insurance Group Number",,"This information can be found on your insurance card",,,,,"[e_insurance_coverage(1)] = '1'",y,,,,,
+e_medical_policy_nbr,hipp_application,,text,"Medical Insurance Policy Number",,"This information can be found on your insurance card",,,,,"[e_insurance_coverage(1)] = '1'",y,,,,,
+e_hsa_account,hipp_application,,radio,"Does policy have a health saving account(HSA)","1, Yes | 2, No",,,,,,,y,,,e_health_saving_account,,
+e_hsa_amount,hipp_application,,text,"Annual contribution to the Health Saving Account (HSA)",,"This information can be found on your plan summary",number,1,9999,,"[e_hsa_account] = '1'",,,,,,
+e_individual_deductible,hipp_application,,text,"What is the individual annual deductible for the health insurance.",,"This information can be found on your plan summary",number,0,10000,,,y,,,,,
+e_family_deductible,hipp_application,,text,"What is the family annual deductible for the health insurance.",,"This information can be found on your plan summary",number,0,10000,,,y,,,,,
+e_individual_max_oop,hipp_application,,text,"What is the individual maximum out of pocket expense for the health insurance.",,"This information can be found on your plan summary",number,0,20000,,,y,,,,,
+e_family_max_oop,hipp_application,,text,"What is the family maximum out of pocket expense for the health insurance.",,"This information can be found on your plan summary",number,1,20000,,,,,,,,
+e_descriptive_03,hipp_application,,descriptive," ",,,,,,,"[e_insurance_coverage(2)] = '1'",,,,,,
+e_descriptive_09,hipp_application,,descriptive,"--- Pharmaceutical Insurance Company Information ---",,,,,,,"[e_insurance_coverage(2)] = '1'",,,,,,
+e_pharmacy_ins_name,hipp_application,,text,"Pharmacy Insurance Company Name",,,,,,,"[e_insurance_coverage(2)] = '1'",y,,,,,
+e_pharmacy_ins_address1,hipp_application,,text,"Pharmacy Insurance Company address line 1
+(address is not required; enter if available)",,,,,,,"[e_insurance_coverage(2)] = '1'",,,,,,
+e_pharmacy_ins_address2,hipp_application,,text,"Pharmacy Insurance Company address line 2",,,,,,,"[e_insurance_coverage(2)] = '1'",,,,,,
+e_pharmacy_ins_city,hipp_application,,text,"Pharmacy Insurance Company city",,,,,,,"[e_insurance_coverage(2)] = '1'",,,,,,
+e_pharmacy_ins_state,hipp_application,,text,"Pharmacy Insurance Company state",,"Please use the two letter postal abbreviation for the state  (e.g.  VA  for Virginia)   ",,,,,"[e_insurance_coverage(2)] = '1'",,,,,,
+e_pharmacy_ins_zip,hipp_application,,text,"Pharmacy Insurance Company zip code",,"Please use a five digit zip code",number,501,99999,,"[e_insurance_coverage(2)] = '1'",,,,,,
+e_pharmacy_ins_phone,hipp_application,,text,"Pharmacy Insurance Company Phone Number",,"Please include the area code without any spaces or additional characters",number,2000000000,9999999999,,"[e_insurance_coverage(2)] = '1'",,,,,,
+e_pharmacy_group_nbr,hipp_application,,text,"Pharmacy Insurance Group Number",,,,,,,"[e_insurance_coverage(2)] = '1'",y,,,,,
+e_pharmacy_policy_nbr,hipp_application,,text,"Pharmacy Insurance Policy Number",,,,,,,"[e_insurance_coverage(2)] = '1'",y,,,,,
+e_descriptive_05,hipp_application,,descriptive," ",,,,,,,"[e_insurance_coverage(2)] = '1'",,,,,,
+e_descriptive_06,hipp_application,,descriptive,"--- Dental Insurance Company Information ---",,,,,,,"[e_insurance_coverage(2)] = '1'",,,,,,
+e_dental_ins_name,hipp_application,,text,"Dental Insurance Company Name",,,,,,,"[e_insurance_coverage(3)] = '1'",y,,,,,
+e_dental_ins_address1,hipp_application,,text,"Dental Insurance Company address line 1
+(address is not required; enter if available)",,,,,,,"[e_insurance_coverage(3)] = '1'",,,,,,
+e_dental_ins_address2,hipp_application,,text,"Dental Insurance Company address line 2",,,,,,,"[e_insurance_coverage(3)] = '1'",,,,,,
+e_dental_ins_city,hipp_application,,text,"Dental Insurance Company city",,,,,,,"[e_insurance_coverage(3)] = '1'",,,,,,
+e_dental_ins_state,hipp_application,,text,"Dental Insurance Company state",,"Please use the two letter postal abbreviation for the state  (e.g.  VA  for Virginia)",,,,,"[e_insurance_coverage(3)] = '1'",,,,,,
+e_dental_ins_zip,hipp_application,,text,"Dental Insurance Company zip code",,"Please use a five digit zip code",number,501,99999,,"[e_insurance_coverage(3)] = '1'",,,,,,
+e_dental_ins_phone,hipp_application,,text,"Dental Insurance Company Phone Number",,"Please include the area code without any spaces or additional characters",number,2000000000,9999999999,,"[e_insurance_coverage(3)] = '1'",,,,,,
+e_dental_group_nbr,hipp_application,,text,"Dental Insurance Group Number",,,,,,,"[e_insurance_coverage(3)] = '1'",y,,,,,
+e_dental_policy_nbr,hipp_application,,text,"Dental Insurance Policy Number",,,,,,,"[e_insurance_coverage(3)] = '1'",y,,,,,
+e_descriptive_07,hipp_application,,descriptive," ",,,,,,,"[e_insurance_coverage(4)] = '1'",,,,,,
+e_descriptive_08,hipp_application,,descriptive,"--- Vision Insurance Company Information ---",,,,,,,"[e_insurance_coverage(4)] = '1'",,,,,,
+e_vision_ins_name,hipp_application,,text,"Vision Insurance Company Name",,,,,,,"[e_insurance_coverage(4)] = '1'",y,,,,,
+e_vision_ins_address1,hipp_application,,text,"Vision Insurance Company address line 1
+(address is not required; enter if available)",,,,,,,"[e_insurance_coverage(4)] = '1'",,,,,,
+e_vision_ins_address2,hipp_application,,text,"Vision Insurance Company address line 2",,,,,,,"[e_insurance_coverage(4)] = '1'",,,,,,
+e_vision_ins_city,hipp_application,,text,"Vision Insurance Company city",,,,,,,"[e_insurance_coverage(4)] = '1'",,,,,,
+e_vision_ins_state,hipp_application,,text,"Vision Insurance Company state",,"Please use the two letter postal abbreviation for the state  (e.g.  VA  for Virginia)   ",,,,,"[e_insurance_coverage(4)] = '1'",,,,,,
+e_vision_ins_zip,hipp_application,,text,"Vision Insurance Company zip code",,"Please use a five digit zip code",number,501,99999,,"[e_insurance_coverage(4)] = '1'",,,,,,
+e_vision_ins_phone,hipp_application,,text,"Vision Insurance Company Phone Number",,"Please include the area code without any spaces or additional characters",number,2000000000,9999999999,,"[e_insurance_coverage(4)] = '1'",,,,,,
+e_vision_group_nbr,hipp_application,,text,"Vision Insurance Group Number",,,,,,,"[e_insurance_coverage(4)] = '1'",y,,,,,
+e_vision_policy_nbr,hipp_application,,text,"Vision Insurance Policy Number",,,,,,,"[e_insurance_coverage(4)] = '1'",y,,,,,
+e_paystub_upload,hipp_application,,file,"Upload Most Recent Paystub",,"Please be certain that the paystub reflects a deduction for the medical insurance premium Please be certain that all of the documents are clearly legible, as poor quality images may not be accepted. ",,,,,"[correspondence_type] = 'A' or [correspondence_type] = 'P' or [correspondence_type] = 'R'",y,,,,,
+e_plan_summary_upload,hipp_application,,file,"Upload Insurance Plan Summary",,"This must provide information about your deductibles, co-pays, and the services covered by your insurance. Please be certain that all of the documents are clearly legible, as poor quality images may  not be accepted.",,,,,"[correspondence_type] = 'A' or [correspondence_type] = 'R'",y,,,,,
+e_eiv_upload,hipp_application,,file,"Upload the Employer Insurance Verification form, sign and dated by your employer",,"Please be sure that both pages of the EIV form are completed according to the instuctions.",,,,,"[correspondence_type] = 'A' or [correspondence_type] = 'R'",y,,,,,
+e_insurance_card_uploads,hipp_application,,text,"A front and back image of each unique insurance card is require; Medicaid recipients only .  Enter the number of insurance card uploads that will be needed.",,"Please be certain that all of the documents are clearly legible, as poor quality images may not be accepted. ",integer,0,30,,"[correspondence_type] = 'A' or [correspondence_type] = 'R'",,,,,,
+e_insurance_card_upload01,hipp_application,,file,"Insurance card 1 upload",,,,,,,"[correspondence_type] = 'A' or [correspondence_type] = 'R'",y,,,,,
+e_insurance_card_upload02,hipp_application,,file,"Insurance card 2 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 1",y,,,,,
+e_insurance_card_upload03,hipp_application,,file,"Insurance card 3 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 2",y,,,,,
+e_insurance_card_upload04,hipp_application,,file,"Insurance card 4 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 3",y,,,,,
+e_insurance_card_upload05,hipp_application,,file,"Insurance card 5 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 4",y,,,,,
+e_insurance_card_upload06,hipp_application,,file,"Insurance card 6 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 5",y,,,,,
+e_insurance_card_upload07,hipp_application,,file,"Insurance card 7 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 6",y,,,,,
+e_insurance_card_upload08,hipp_application,,file,"Insurance card 8 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 7",y,,,,,
+e_insurance_card_upload09,hipp_application,,file,"Insurance card 9 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 8",y,,,,,
+e_insurance_card_upload10,hipp_application,,file,"Insurance card 10 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 9",y,,,,,
+e_insurance_card_upload11,hipp_application,,file,"Insurance card 11 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 10",y,,,,,
+e_insurance_card_upload12,hipp_application,,file,"Insurance card 12 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 11",y,,,,,
+e_insurance_card_upload13,hipp_application,,file,"Insurance card 13 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 12",y,,,,,
+e_insurance_card_upload14,hipp_application,,file,"Insurance card 14 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 13",y,,,,,
+e_insurance_card_upload15,hipp_application,,file,"Insurance card 15 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 14",y,,,,,
+e_insurance_card_upload16,hipp_application,,file,"Insurance card 16 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 15",y,,,,,
+e_insurance_card_upload17,hipp_application,,file,"Insurance card 17 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 16",y,,,,,
+e_insurance_card_upload18,hipp_application,,file,"Insurance card 18 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 17",y,,,,,
+e_insurance_card_upload19,hipp_application,,file,"Insurance card 19 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 18",y,,,,,
+e_insurance_card_upload20,hipp_application,,file,"Insurance card 20 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 19",y,,,,,
+e_insurance_card_upload21,hipp_application,,file,"Insurance card 21 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 20",,,,,,
+e_insurance_card_upload22,hipp_application,,file,"Insurance card 22 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 21",,,,,,
+e_insurance_card_upload23,hipp_application,,file,"Insurance card 23 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 22",,,,,,
+e_insurance_card_upload24,hipp_application,,file,"Insurance card 24 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 23",,,,,,
+e_insurance_card_upload25,hipp_application,,file,"Insurance card 25 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 24",,,,,,
+e_insurance_card_upload26,hipp_application,,file,"Insurance card 26 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 25",,,,,,
+e_insurance_card_upload27,hipp_application,,file,"Insurance card 27 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 26",,,,,,
+e_insurance_card_upload28,hipp_application,,file,"Insurance card 28 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 27",,,,,,
+e_insurance_card_upload29,hipp_application,,file,"Insurance card 29 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 28",,,,,,
+e_insurance_card_upload30,hipp_application,,file,"Insurance card 30 upload",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_insurance_card_uploads] > 29",,,,,,
+e_supporting_docs,hipp_application,,radio,"Do you have other supporting documents to upload  (Examples: Power Of Attorney, Custody Order, Executor)?","1, yes | 2, No",,,,,,"[correspondence_type] = 'A' or [correspondence_type] = 'R'",y,,,e_supporting_docs,,
+e_supporting_doc_nbr,hipp_application,,text,"Enter the number of other supporting documents to be uploaded.",,,number,0,5,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_supporting_docs] = '1'",,,,,,
+e_supporting_docs_desc1,hipp_application,,text,"Other supporting document 1 description",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_supporting_docs] = '1'",y,,,,,
+e_supporting_doc1,hipp_application,,file,"Other supporting document 1",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_supporting_docs] = '1'",y,,,,,
+e_supporting_docs_desc2,hipp_application,,text,"Other supporting document 2 description",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_supporting_doc_nbr] > 1",y,,,,,
+e_supporting_doc2,hipp_application,,file,"Other supporting document 2",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_supporting_doc_nbr] > 1",y,,,,,
+e_supporting_docs_desc3,hipp_application,,text,"Other supporting document 3 description",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_supporting_doc_nbr] > 2",y,,,,,
+e_supporting_doc3,hipp_application,,file,"Other supporting document 3",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_supporting_doc_nbr] > 2",y,,,,,
+e_supporting_docs_desc4,hipp_application,,text,"Other supporting document 4 description",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_supporting_doc_nbr] > 3",y,,,,,
+e_supporting_doc4,hipp_application,,file,"Other supporting document 4 description",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_supporting_doc_nbr] > 3",y,,,,,
+e_supporting_docs_desc5,hipp_application,,text,"Other supporting document 5 description",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_supporting_doc_nbr] > 4",y,,,,,
+e_supporting_doc5,hipp_application,,file,"Other supporting document 5",,,,,,,"([correspondence_type] = 'A' or [correspondence_type] = 'R') and [e_supporting_doc_nbr] > 4",y,,,,,
+p_authorization,hipp_application,,text,"I have given true & accurate information to the best of my knowledge. I understand that if I have given false information, withheld information, or failed to report a change I may be breaking the law & could be prosecuted. I authorize insurers or employers to release any information on myself, or other household member(s) necessary to determine eligibility for the HIPP/HIPP for Kids program. If you agree with this statement enter your first and last name.",,,,,,,,y,,,,,
+confirmation,hipp_application,,checkbox,"I understand that within 24 hours I will receive an email confirmation of my submission.","1, Yes",,,,,,,y,,,,,
+status_notification,hipp_application,,checkbox,"I understand that I must select ""Form Status"" ""Complete"" to submit this form to the Virginia Medicaid HIPP unit.","1, Yes",,,,,,,y,,,,,

@@ -1,0 +1,2145 @@
+<!-- Retrieves the records that populate the document tree and its extracted fields. -->
+{% fetchxml pdfs %}
+<fetch mapping="logical">
+  <entity name="cr417_annotatedpdf">
+    <attribute name="cr417_annotatedpdfid" />
+    <attribute name="cr417_sharepointurl" />
+    <attribute name="cr417_pdffile_name" />
+    <attribute name="cr417_extractedjson" />
+    <filter type="and">
+      <condition attribute="cr417_extractedjson" operator="not-null" />
+    </filter>
+    <order attribute="cr417_field1" descending="false" />
+  </entity>
+</fetch>
+{% endfetchxml %}
+
+<!-- Loads the library used to render PDF files in the browser. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<style>
+
+    /* Visual variables shared by the viewer and the tree. */
+
+    :root {
+    --vsu-burgundy: #5B2C35;
+    --vsu-gold: #C99700;
+    --vsu-border: #E5E7EB;
+  }
+
+      .viewer-tabs {
+        display: flex;
+        gap: 4px;
+        margin: 0 0 16px;
+        border-bottom: 1px solid var(--vsu-border);
+      }
+
+      .viewer-tab {
+        padding: 10px 16px;
+        border: 0;
+        border-bottom: 3px solid transparent;
+        background: transparent;
+        color: #374151;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .viewer-tab:hover {
+        color: var(--vsu-burgundy);
+        background: #F9FAFB;
+      }
+
+      .viewer-tab[aria-selected="true"] {
+        border-bottom-color: var(--vsu-gold);
+        color: var(--vsu-burgundy);
+      }
+
+      .viewer-tab:focus-visible,
+      .record-item:focus-visible,
+      .records-load-more:focus-visible {
+        outline: 3px solid rgba(201, 151, 0, .45);
+        outline-offset: 2px;
+      }
+
+      .viewer-panel[hidden] {
+        display: none;
+      }
+
+      /* Divides the page between the sidebar tree and the PDF content. */
+      .viewer-layout {
+        display: grid;
+        grid-template-columns: minmax(280px, 350px) minmax(0, 1fr);
+        gap: 20px;
+        min-height: 700px;
+        height: min(900px, calc(100vh - 140px));
+      }
+
+      /* Keeps the documents in a scrollable column. */
+      .viewer-list {
+        min-width: 0;
+        min-height: 0;
+        overflow-y: auto;
+        border-right: 1px solid #ddd;
+        padding-right: 15px;
+      }
+
+      .viewer-content {
+        min-width: 0;
+        min-height: 0;
+        flex: 1;
+        height: 900px;
+        overflow: auto;
+        padding: 20px;
+        background: #eee;
+      }
+
+      .pdf-link {
+        display: block;
+        padding: 8px;
+        margin-bottom: 4px;
+        color: #0078d4;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .pdf-link:hover {
+        text-decoration: underline;
+      }
+
+  .pdf-link.active{
+      background:#5B2C35 !important;
+      color:#FFFFFF !important;
+      border-radius:6px;
+      text-decoration:none;
+  }
+
+  .pdf-link.active .confidence{
+      color:#F4D06F !important;
+      font-weight:700;
+  }
+
+      /* Centers the pages rendered by PDF.js. */
+      #pdfViewer {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .pdf-page {
+        position: relative;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+      }
+
+      .pdf-page canvas {
+        display: block;
+      }
+
+  .viewer-list h3{
+
+    color:var(--vsu-burgundy);
+
+    font-size:22px;
+
+    font-weight:700;
+
+  }
+
+  .pdf-link{
+
+    display:block;
+
+    padding:6px 10px;
+
+    margin-bottom:2px;
+
+    border-radius:6px;
+
+    color:#374151;
+
+    transition:all .2s ease;
+
+  }
+
+  .pdf-link:hover{
+
+    background:#F3F4F6;
+
+    color:var(--vsu-burgundy);
+
+    text-decoration:none;
+
+  }
+
+  .pdf-link.active{
+
+    background:var(--vsu-burgundy);
+
+    color:white!important;
+
+  }
+
+  .viewer-content{
+
+    background:#EEF2F7;
+
+  }
+
+
+  .pdf-page{
+
+    background:white;
+
+    border-radius:12px;
+
+    overflow:hidden;
+
+    box-shadow:
+        0 8px 24px rgba(0,0,0,.12);
+
+  }
+
+  .pdf-highlight{
+    background:yellow;
+  }
+
+  .pdf-highlight{
+
+    background:
+        rgba(201,151,0,.45);
+
+    border-radius:3px;
+
+  }
+
+  .pdf-polygon-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  .pdf-polygon-highlight {
+    fill: rgba(201, 151, 0, .35);
+    stroke: var(--vsu-burgundy);
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .confidence{
+      color:#C99700;
+      font-weight:600;
+      font-size:12px;
+  }
+
+  .viewer-list{
+
+    background:white;
+
+    border-right:1px solid var(--vsu-border);
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,.05);
+
+    padding:20px;
+
+  }
+
+    /* Removes native markers and defines the tree's visual structure. */
+    .pdf-tree,
+    .pdf-tree-group {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .pdf-tree-group {
+      margin-left: 18px;
+      border-left: 1px solid var(--vsu-border);
+    }
+
+    /* Shared appearance for document, group, and field items. */
+    .pdf-treeitem {
+      position: relative;
+      margin: 2px 0;
+      padding: 7px 10px;
+      border-radius: 6px;
+      color: #374151;
+      cursor: pointer;
+      outline: none;
+      transition: background-color .15s ease, box-shadow .15s ease;
+    }
+
+    .pdf-treeitem[data-has-children="true"] {
+      font-weight: 700;
+      color: #323130;
+    }
+
+    .pdf-document-treeitem > .pdf-treeitem-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: 26px;
+      min-width: 0;
+    }
+
+    .pdf-document-treeitem::before {
+      position: absolute;
+      top: 8px;
+      left: 10px;
+    }
+
+    .pdf-document-icon {
+      flex: 0 0 18px;
+      color: #006400;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    /* Visual indicator for node expansion. */
+    .pdf-treeitem[data-has-children="true"]::before {
+      display: inline-block;
+      width: 18px;
+      content: "▸";
+      color: var(--vsu-burgundy);
+    }
+
+    .pdf-treeitem[data-expanded="true"]::before {
+      content: "▾";
+    }
+
+    /* Highlights the item receiving keyboard focus. */
+    .pdf-treeitem:focus-visible {
+      box-shadow: 0 0 0 3px rgba(201, 151, 0, .45);
+    }
+
+    .pdf-treeitem:hover {
+      background: #FFF4CC;
+      color: var(--vsu-burgundy);
+      box-shadow: inset 4px 0 0 var(--vsu-gold);
+    }
+
+    .pdf-treeitem:not([aria-selected="true"]):hover:has(> [role="group"]:hover) {
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .pdf-treeitem[aria-selected="true"] {
+      background: var(--vsu-burgundy);
+      color: #FFFFFF;
+    }
+
+    .pdf-treeitem[aria-selected="true"] .confidence {
+      color: #F4D06F;
+    }
+
+    .pdf-treeitem-label {
+      display: inline;
+    }
+
+    .pdf-treeitem-value {
+      display: block;
+      width: calc(100% - 34px);
+      margin-top: 2px;
+      font-size: 13px;
+      font-weight: 400;
+      overflow-wrap: anywhere;
+    }
+
+    .pdf-treeitem-editor {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .pdf-treeitem-input {
+      min-width: 0;
+      flex: 1;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      padding: 3px 5px;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+    }
+
+    .pdf-treeitem-input:hover {
+      border-color: var(--vsu-border);
+      background: #FFFFFF;
+      color: #323130;
+    }
+
+    .pdf-treeitem-input:focus {
+      border-color: var(--vsu-gold);
+      background: #FFFFFF;
+      color: #323130;
+      outline: none;
+    }
+
+    .pdf-treeitem-save {
+      flex: 0 0 30px;
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      border: 0;
+      border-radius: 4px;
+      background: var(--vsu-gold);
+      color: #323130;
+      cursor: pointer;
+    }
+
+    /* The save icon only appears after the value changes. */
+    .pdf-treeitem-save[hidden] {
+      display: none;
+    }
+
+    .pdf-treeitem-save:hover,
+    .pdf-treeitem-save:focus-visible {
+      background: #E0B52A;
+      outline: 2px solid var(--vsu-burgundy);
+      outline-offset: 1px;
+    }
+
+    .field-save-dialog {
+      border: 0;
+      border-radius: 8px;
+      padding: 24px;
+      color: #323130;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .2);
+    }
+
+    .field-save-dialog::backdrop {
+      background: rgba(0, 0, 0, .35);
+    }
+
+    .field-save-dialog h2,
+    .field-save-dialog strong {
+      display: block;
+      margin: 0 0 12px;
+      color: var(--vsu-burgundy);
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .field-save-dialog p,
+    .field-save-dialog button {
+      font-size: 14px;
+    }
+
+    .field-save-dialog p {
+      margin-top: 16px;
+    }
+
+    .field-save-dialog button {
+      float: right;
+      margin-top: 16px;
+      padding: 6px 16px;
+      border: 0;
+      border-radius: 4px;
+      background: var(--vsu-burgundy);
+      color: #FFFFFF;
+      cursor: pointer;
+    }
+
+    .pdf-treeitem-group[hidden] {
+      display: none;
+    }
+
+    .tree-empty {
+      padding: 12px 4px;
+      color: #6B7280;
+    }
+
+    .records-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .record-item {
+      width: 100%;
+      padding: 9px 10px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: #374151;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .record-item:hover {
+      background: #F3F4F6;
+      color: var(--vsu-burgundy);
+    }
+
+    .record-item[aria-selected="true"] {
+      background: var(--vsu-burgundy);
+      color: #FFFFFF;
+    }
+
+    .record-item-name {
+      display: block;
+      overflow-wrap: anywhere;
+      font-weight: 700;
+    }
+
+    .record-item-date {
+      display: block;
+      margin-top: 3px;
+      font-size: 12px;
+      opacity: .8;
+    }
+
+    .records-list-status,
+    .record-viewer-status {
+      padding: 12px 4px;
+      color: #6B7280;
+    }
+
+    #recordsListStatus {
+      text-align: right;
+    }
+
+    .records-load-more {
+      width: 100%;
+      margin-top: 12px;
+      padding: 8px 12px;
+      border: 1px solid var(--vsu-burgundy);
+      border-radius: 4px;
+      background: #FFFFFF;
+      color: var(--vsu-burgundy);
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .records-load-more:disabled {
+      cursor: wait;
+      opacity: .65;
+    }
+
+    .record-viewer-header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--vsu-border);
+    }
+
+    .record-viewer-title {
+      margin: 0;
+      color: var(--vsu-burgundy);
+      font-size: 22px;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .record-form {
+      display: grid;
+      gap: 14px;
+    }
+
+    .record-group {
+      border: 1px solid var(--vsu-border);
+      border-radius: 6px;
+      background: #FFFFFF;
+    }
+
+    .record-group .record-group {
+      margin: 0 12px 12px;
+      border-left: 4px solid var(--vsu-gold);
+    }
+
+    .record-group-summary {
+      padding: 12px 14px;
+      color: var(--vsu-burgundy);
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .record-group .record-group .record-group-summary {
+      font-size: 15px;
+    }
+
+    .record-group-summary:focus-visible {
+      outline: 3px solid rgba(201, 151, 0, .45);
+      outline-offset: -3px;
+    }
+
+    .record-group-content {
+      display: grid;
+      grid-template-columns: repeat(var(--record-column-count, 1), minmax(0, 1fr));
+      align-items: start;
+      gap: 12px;
+      padding: 0 12px 12px;
+    }
+
+    .record-group > .record-group {
+      background: #F9FAFB;
+    }
+
+    .record-field {
+      --record-field-font-size: 14px;
+      min-width: 0;
+      padding: 12px;
+      border: 1px solid var(--vsu-border);
+      border-radius: 6px;
+      background: #FFFFFF;
+    }
+
+    .record-field-label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--vsu-burgundy);
+      font-size: var(--record-field-font-size);
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .record-field-value {
+      margin: 0;
+      color: #323130;
+      font-size: var(--record-field-font-size);
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .record-field-value.is-empty {
+      color: #6B7280;
+      font-style: italic;
+    }
+
+    .record-value-list {
+      margin: 0;
+      padding-left: 22px;
+      font-size: var(--record-field-font-size);
+    }
+
+    @media (max-width: 767px) {
+      .viewer-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+        min-height: 0;
+      }
+
+      .viewer-list,
+      .viewer-content {
+        height: auto;
+        min-height: 360px;
+      }
+
+      .viewer-list {
+        border-right: 0;
+        border-bottom: 1px solid var(--vsu-border);
+        padding: 14px;
+      }
+
+      .viewer-content {
+        padding: 12px;
+      }
+
+      .record-group-content {
+        grid-template-columns: 1fr;
+      }
+    }
+
+      /* Text layer used by PDF.js to locate and highlight values. */
+      .textLayer {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        overflow: hidden;
+        line-height: 1;
+      }
+
+      .textLayer span {
+        position: absolute;
+        color: transparent;
+        white-space: pre;
+        cursor: text;
+        transform-origin: 0 0;
+      }
+
+      .textLayer span.pdf-highlight {
+        background-color: rgba(255, 230, 0, 0.7);
+        border-radius: 2px;
+      }
+
+      #viewerStatus {
+        padding: 30px;
+        text-align: center;
+        font-weight: 600;
+      }
+</style>
+
+<div class="viewer-tabs" role="tablist" aria-label="Viewer type">
+  <button id="pdfViewerTab" class="viewer-tab" type="button" role="tab" aria-selected="true" aria-controls="pdfViewerPanel" tabindex="0">Paper submissions</button>
+  <button id="recordsViewerTab" class="viewer-tab" type="button" role="tab" aria-selected="false" aria-controls="recordsViewerPanel" tabindex="-1">E-Form submissions</button>
+</div>
+
+<section id="pdfViewerPanel" class="viewer-panel" role="tabpanel" aria-labelledby="pdfViewerTab">
+  <!-- Main layout: document tree on the left and viewer on the right. -->
+  <div class="viewer-layout">
+    <div class="viewer-list">
+      <!-- Liquid placeholders are populated by JavaScript with real tree items. -->
+      <div id="documentTree" role="tree" aria-label="HIPP document fields" aria-multiselectable="false">
+        {% for item in pdfs.results.entities %}
+        <div class="pdf-tree" role="treeitem" aria-level="1" aria-expanded="false" data-pdf-url="{{ item.cr417_sharepointurl | escape }}" data-pdf-id="{{ item.cr417_annotatedpdfid | escape }}" data-pdf-name="{{ item.cr417_pdffile_name | escape }}" data-extracted-json="{{ item.cr417_extractedjson | escape }}"></div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Status area and page rendering for the selected PDF. -->
+    <div class="viewer-content">
+      <div id="viewerStatus">Select a document.</div>
+      <div id="pdfViewer"></div>
+    </div>
+  </div>
+</section>
+
+<section id="recordsViewerPanel" class="viewer-panel" role="tabpanel" aria-labelledby="recordsViewerTab" hidden>
+  <div class="viewer-layout">
+    <div class="viewer-list">
+      <div id="recordsListStatus" class="records-list-status" role="status" aria-live="polite">Open this viewer to load records.</div>
+      <div id="recordsList" class="records-list" role="listbox" aria-label="E-form submissions"></div>
+      <button id="recordsLoadMore" class="records-load-more" type="button" hidden>Load more</button>
+    </div>
+    <div class="viewer-content">
+      <div id="recordViewerStatus" class="record-viewer-status" role="status" aria-live="polite">Select a record.</div>
+      <div id="recordViewer" hidden>
+        <header class="record-viewer-header">
+          <h3 id="recordViewerTitle" class="record-viewer-title"></h3>
+        </header>
+        <form id="recordForm" class="record-form" aria-label="Submitted record values"></form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Dialog shown only after Dataverse confirms the save. -->
+<dialog id="fieldSaveDialog" class="field-save-dialog" aria-labelledby="fieldSaveDialogTitle">
+  <strong id="fieldSaveDialogTitle">Record updated successfully.</strong>
+  <p id="fieldSaveDialogMessage"></p>
+  <form method="dialog">
+    <button type="submit">OK</button>
+  </form>
+</dialog>
+
+<script>
+  // Initializes the tree and viewer after the page HTML is ready.
+  document.addEventListener("DOMContentLoaded", function () {
+
+    const viewer = document.getElementById("pdfViewer");
+    const statusElement = document.getElementById("viewerStatus");
+    const tree = document.getElementById("documentTree");
+    const viewerTabs = Array.from(document.querySelectorAll('[role="tab"][aria-controls]'));
+    const recordsTab = document.getElementById("recordsViewerTab");
+    const recordsList = document.getElementById("recordsList");
+    const recordsListStatus = document.getElementById("recordsListStatus");
+    const recordsLoadMore = document.getElementById("recordsLoadMore");
+    const recordViewer = document.getElementById("recordViewer");
+    const recordViewerStatus = document.getElementById("recordViewerStatus");
+    const recordViewerTitle = document.getElementById("recordViewerTitle");
+    const recordForm = document.getElementById("recordForm");
+    let selectedItem = null;
+    let selectedRecordItem = null;
+    let recordsLoaded = false;
+    let recordsLoading = false;
+    const recordFieldLabels = Object.create(null);
+    const recordFieldChoices = Object.create(null);
+    let recordsNextLink = "/_api/cr417_hipprecordses?$select=cr417_hipprecordsid,cr417_name,cr417_recordjson,createdon&$orderby=createdon%20desc&$top=50";
+
+    fetch("/hipp-field-definitions.json", { headers: { "Accept": "application/json" } })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+        }
+
+        return response.json();
+      })
+      .then(function (definitions) {
+        if (!Array.isArray(definitions)) {
+          return;
+        }
+
+        definitions.forEach(function (definition) {
+          const name = definition && typeof definition.name === "string" ? definition.name.trim() : "";
+          const label = definition && typeof definition.label === "string" ? definition.label.trim() : "";
+          const choices = definition && typeof definition.choices === "string" ? definition.choices.trim() : "";
+
+          if (name && label) {
+            recordFieldLabels[name] = label;
+          }
+
+          if (name && choices) {
+            const choiceLabels = Object.create(null);
+
+            choices.split("|").forEach(function (choice) {
+              const separatorIndex = choice.indexOf(",");
+
+              if (separatorIndex < 0) {
+                return;
+              }
+
+              const value = choice.slice(0, separatorIndex).trim();
+              const displayName = choice.slice(separatorIndex + 1).trim();
+
+              if (value && displayName) {
+                choiceLabels[value] = displayName;
+              }
+            });
+
+            if (Object.keys(choiceLabels).length) {
+              recordFieldChoices[name] = choiceLabels;
+            }
+          }
+        });
+
+        if (selectedRecordItem) {
+          renderRecord(selectedRecordItem.recordData);
+        }
+      })
+      .catch(function (error) {
+        console.error("Unable to load record field display names:", error);
+      });
+
+    function activateViewerTab(tab, moveFocus) {
+      viewerTabs.forEach(function (viewerTab) {
+        const active = viewerTab === tab;
+        const panel = document.getElementById(viewerTab.getAttribute("aria-controls"));
+        viewerTab.setAttribute("aria-selected", String(active));
+        viewerTab.tabIndex = active ? 0 : -1;
+
+        if (panel) {
+          panel.hidden = !active;
+        }
+      });
+
+      if (moveFocus) {
+        tab.focus();
+      }
+
+      if (tab === recordsTab && !recordsLoaded) {
+        loadRecordsPage();
+      }
+    }
+
+    viewerTabs.forEach(function (tab, index) {
+      tab.addEventListener("click", function () {
+        activateViewerTab(tab, false);
+      });
+      tab.addEventListener("keydown", function (event) {
+        let nextIndex = index;
+
+        if (event.key === "ArrowRight") {
+          nextIndex = (index + 1) % viewerTabs.length;
+        } else if (event.key === "ArrowLeft") {
+          nextIndex = (index - 1 + viewerTabs.length) % viewerTabs.length;
+        } else if (event.key === "Home") {
+          nextIndex = 0;
+        } else if (event.key === "End") {
+          nextIndex = viewerTabs.length - 1;
+        } else {
+          return;
+        }
+
+        event.preventDefault();
+        activateViewerTab(viewerTabs[nextIndex], true);
+      });
+    });
+
+    function parseRecordJson(jsonText) {
+      if (!jsonText) {
+        return null;
+      }
+
+      let parsed = JSON.parse(jsonText);
+
+      if (typeof parsed === "string") {
+        parsed = JSON.parse(parsed);
+      }
+
+      return parsed && !Array.isArray(parsed) && typeof parsed === "object" ? parsed : null;
+    }
+
+    function formatRecordTitle(record) {
+      const recordName = (record.cr417_name || "Unnamed record").trim();
+      const timestampMatch = recordName.match(/^(.*?)\s*-\s*(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})(?::\d{2}(?:\.\d+)?)?Z?$/);
+
+      if (timestampMatch) {
+        return timestampMatch[1] + " - " + timestampMatch[2] + " " + formatRecordTime(timestampMatch[3]);
+      }
+
+      if (record.createdon) {
+        const createdOn = new Date(record.createdon);
+
+        if (!Number.isNaN(createdOn.getTime())) {
+          const year = createdOn.getFullYear();
+          const month = String(createdOn.getMonth() + 1).padStart(2, "0");
+          const day = String(createdOn.getDate()).padStart(2, "0");
+          const minutes = String(createdOn.getMinutes()).padStart(2, "0");
+          return recordName + " - " + year + "-" + month + "-" + day + " " + formatRecordTime(createdOn.getHours() + ":" + minutes);
+        }
+      }
+
+      return recordName;
+    }
+
+    function formatRecordTime(value) {
+      const parts = String(value).split(":");
+      const hours = Number(parts[0]);
+      const minutes = parts[1] || "00";
+
+      if (!Number.isInteger(hours) || hours < 0 || hours > 23) {
+        return value;
+      }
+
+      return (hours % 12 || 12) + ":" + minutes + (hours >= 12 ? " PM" : " AM");
+    }
+
+    function getRecordMenuParts(record) {
+      const recordName = (record.cr417_name || "Unnamed record").trim();
+      const timestampMatch = recordName.match(/^(.*?)\s*-\s*(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})(?::\d{2}(?:\.\d+)?)?Z?$/);
+
+      if (timestampMatch) {
+        return {
+          name: timestampMatch[1],
+          date: timestampMatch[2] + " " + formatRecordTime(timestampMatch[3])
+        };
+      }
+
+      const title = formatRecordTitle(record);
+      const titleMatch = title.match(/^(.*?)\s*-\s*(\d{4}-\d{2}-\d{2}\s\d{1,2}:\d{2}\s(?:AM|PM))$/);
+
+      return titleMatch
+        ? { name: titleMatch[1], date: titleMatch[2] }
+        : { name: title, date: "" };
+    }
+
+    function getRecordChoiceDisplayName(fieldKey, value) {
+      const choices = recordFieldChoices[fieldKey];
+      const storedValue = String(value);
+
+      return choices && Object.prototype.hasOwnProperty.call(choices, storedValue)
+        ? choices[storedValue]
+        : storedValue;
+    }
+
+    function createRecordValue(fieldKey, value) {
+      if (value === null || value === undefined || value === "") {
+        const emptyValue = document.createElement("p");
+        emptyValue.className = "record-field-value is-empty";
+        emptyValue.textContent = "Empty";
+        return emptyValue;
+      }
+
+      if (Array.isArray(value)) {
+        if (!value.length) {
+          return createRecordValue(fieldKey, null);
+        }
+
+        const list = document.createElement("ul");
+        list.className = "record-value-list";
+        value.forEach(function (entry) {
+          const listItem = document.createElement("li");
+          listItem.textContent = entry && typeof entry === "object"
+            ? JSON.stringify(entry, null, 2)
+            : getRecordChoiceDisplayName(fieldKey, entry);
+          list.appendChild(listItem);
+        });
+        return list;
+      }
+
+      const displayValue = document.createElement("p");
+      displayValue.className = "record-field-value";
+      displayValue.textContent = typeof value === "object"
+        ? JSON.stringify(value, null, 2)
+        : getRecordChoiceDisplayName(fieldKey, value);
+      return displayValue;
+    }
+
+    function createRecordHierarchy(values) {
+      const groups = {
+        general: { label: "General Information", fields: [], children: [] },
+        policyholder: { label: "Policyholder", fields: [], children: [] },
+        policyholderAddress: { label: "Policyholder Address", fields: [], children: [] },
+        memberAddress: { label: "Member Address", fields: [], children: [] },
+        household: { label: "Household", fields: [], children: [] },
+        employer: { label: "Employer", fields: [], children: [] },
+        healthPlan: { label: "Health Plan", fields: [], children: [] },
+        medical: { label: "Medical Insurance", fields: [], children: [] },
+        pharmacy: { label: "Pharmacy Insurance", fields: [], children: [] },
+        dental: { label: "Dental Insurance", fields: [], children: [] },
+        vision: { label: "Vision Insurance", fields: [], children: [] },
+        documents: { label: "Documents", fields: [], children: [] },
+        other: { label: "Other", fields: [], children: [] }
+      };
+      const householdPeople = {};
+      const addressFields = /^(p_address|p_city|p_state|p_zip|p_different_address)$/;
+      const employerFields = /^e_(status|hired_date|retired|school_|contract_year|hr_|representative_phone|employer|address|city|state|zip|employee_ins_nbr|self_employed)/;
+      const documentFields = /^e_(paystub_upload|plan_summary_upload|eiv_upload|insurance_card_upload|supporting_doc)/;
+
+      Object.entries(values).forEach(function (entry) {
+        const key = entry[0];
+        const field = { key: key, value: entry[1] };
+        const personMatch = key.match(/^h(\d+)_(.+)$/);
+
+        if (personMatch) {
+          const personNumber = Number(personMatch[1]);
+
+          if (!householdPeople[personNumber]) {
+            householdPeople[personNumber] = {
+              label: "Person " + personNumber,
+              fields: [],
+              children: []
+            };
+          }
+
+          householdPeople[personNumber].fields.push(field);
+        } else if (key.indexOf("p_") === 0 && addressFields.test(key)) {
+          groups.policyholderAddress.fields.push(field);
+        } else if (key.indexOf("p_") === 0) {
+          groups.policyholder.fields.push(field);
+        } else if (key.indexOf("m_") === 0) {
+          groups.memberAddress.fields.push(field);
+        } else if (key.indexOf("h_") === 0) {
+          groups.household.fields.push(field);
+        } else if (documentFields.test(key)) {
+          groups.documents.fields.push(field);
+        } else if (/^e_medical_/.test(key)) {
+          groups.medical.fields.push(field);
+        } else if (/^e_pharmacy_/.test(key)) {
+          groups.pharmacy.fields.push(field);
+        } else if (/^e_dental_/.test(key)) {
+          groups.dental.fields.push(field);
+        } else if (/^e_vision_/.test(key)) {
+          groups.vision.fields.push(field);
+        } else if (employerFields.test(key)) {
+          groups.employer.fields.push(field);
+        } else if (key.indexOf("e_") === 0) {
+          groups.healthPlan.fields.push(field);
+        } else if (/^(application_id|correspondence_type|hipp_number|confirmation|status_notification)$/.test(key)) {
+          groups.general.fields.push(field);
+        } else {
+          groups.other.fields.push(field);
+        }
+      });
+
+      groups.policyholder.children = [groups.policyholderAddress, groups.memberAddress].filter(groupHasData);
+      groups.household.children = Object.keys(householdPeople)
+        .map(Number)
+        .sort(function (left, right) { return left - right; })
+        .filter(function (personNumber) {
+          return householdPeople[personNumber].fields.some(function (field) {
+            return hasMeaningfulRecordValue(field.value);
+          });
+        })
+        .map(function (personNumber) { return householdPeople[personNumber]; });
+      groups.employer.children = [groups.healthPlan, groups.medical, groups.pharmacy, groups.dental, groups.vision, groups.documents].filter(groupHasData);
+
+      return [groups.general, groups.policyholder, groups.household, groups.employer, groups.other].filter(groupHasData);
+    }
+
+    function hasMeaningfulRecordValue(value) {
+      if (value === null || value === undefined) {
+        return false;
+      }
+
+      if (typeof value === "string") {
+        return value.trim() !== "";
+      }
+
+      if (Array.isArray(value)) {
+        return value.some(hasMeaningfulRecordValue);
+      }
+
+      if (typeof value === "object") {
+        return Object.keys(value).some(function (key) {
+          return hasMeaningfulRecordValue(value[key]);
+        });
+      }
+
+      return true;
+    }
+
+    function groupHasData(group) {
+      return group.fields.length > 0 || group.children.length > 0;
+    }
+
+    function formatRecordFieldLabel(key) {
+      const fieldName = key.replace(/^(p|m|h\d+|h|e)_/, "");
+
+      return fieldName
+        .split("_")
+        .filter(Boolean)
+        .map(function (word) {
+          const upperWord = word.toUpperCase();
+          return /^(ID|DOB|SSN|HSA|EIV|HR|ZIP|OOP)$/.test(upperWord)
+            ? upperWord
+            : word.charAt(0).toUpperCase() + word.slice(1);
+        })
+        .join(" ");
+    }
+
+    function getRecordFieldLabel(key) {
+      return recordFieldLabels[key] || formatRecordFieldLabel(key);
+    }
+
+    function createRecordField(fieldData) {
+      const field = document.createElement("div");
+      const label = document.createElement("span");
+      field.className = "record-field";
+      label.className = "record-field-label";
+      label.textContent = getRecordFieldLabel(fieldData.key);
+      field.appendChild(label);
+      field.appendChild(createRecordValue(fieldData.key, fieldData.value));
+      return field;
+    }
+
+    function appendRecordFields(content, fields) {
+      const columnCount = Math.min(3, fields.length);
+
+      if (!columnCount) {
+        content.hidden = true;
+        return;
+      }
+
+      content.style.setProperty("--record-column-count", String(columnCount));
+      fields.forEach(function (fieldData) {
+        content.appendChild(createRecordField(fieldData));
+      });
+    }
+
+    function createRecordGroup(group, depth) {
+      const details = document.createElement("details");
+      const summary = document.createElement("summary");
+      const content = document.createElement("div");
+      details.className = "record-group";
+      details.open = false;
+      summary.className = "record-group-summary";
+      summary.textContent = group.label;
+      content.className = "record-group-content";
+
+      appendRecordFields(content, group.fields);
+
+      details.appendChild(summary);
+      details.appendChild(content);
+      group.children.forEach(function (child) {
+        details.appendChild(createRecordGroup(child, depth + 1));
+      });
+      return details;
+    }
+
+    function renderRecord(record) {
+      recordViewerTitle.textContent = formatRecordTitle(record);
+      recordForm.replaceChildren();
+
+      let values;
+
+      try {
+        values = parseRecordJson(record.cr417_recordjson);
+      } catch (error) {
+        console.error("Invalid RecordJSON:", error);
+        recordViewer.hidden = true;
+        recordViewerStatus.hidden = false;
+        recordViewerStatus.textContent = "This record contains invalid JSON and cannot be displayed.";
+        return;
+      }
+
+      if (!values) {
+        recordViewer.hidden = true;
+        recordViewerStatus.hidden = false;
+        recordViewerStatus.textContent = "This record has no object data to display.";
+        return;
+      }
+
+      const entries = Object.entries(values);
+
+      if (!entries.length) {
+        recordViewer.hidden = true;
+        recordViewerStatus.hidden = false;
+        recordViewerStatus.textContent = "This record is empty.";
+        return;
+      }
+
+      createRecordHierarchy(values).forEach(function (group) {
+        recordForm.appendChild(createRecordGroup(group, 0));
+      });
+
+      recordViewerStatus.textContent = "";
+      recordViewerStatus.hidden = true;
+      recordViewer.hidden = false;
+    }
+
+    function selectRecord(item, moveFocus) {
+      if (selectedRecordItem) {
+        selectedRecordItem.setAttribute("aria-selected", "false");
+        selectedRecordItem.tabIndex = -1;
+      }
+
+      selectedRecordItem = item;
+      selectedRecordItem.setAttribute("aria-selected", "true");
+      selectedRecordItem.tabIndex = 0;
+
+      if (moveFocus) {
+        selectedRecordItem.focus();
+      }
+
+      renderRecord(item.recordData);
+    }
+
+    function appendRecord(record) {
+      const duplicate = Array.from(recordsList.children).some(function (item) {
+        return item.dataset.recordId === record.cr417_hipprecordsid;
+      });
+
+      if (!record.cr417_hipprecordsid || duplicate) {
+        return;
+      }
+
+      const item = document.createElement("button");
+      const name = document.createElement("span");
+      const date = document.createElement("span");
+      const menuParts = getRecordMenuParts(record);
+      item.type = "button";
+      item.className = "record-item";
+      item.setAttribute("role", "option");
+      item.setAttribute("aria-selected", "false");
+      item.dataset.recordId = record.cr417_hipprecordsid;
+      item.tabIndex = recordsList.children.length ? -1 : 0;
+      item.recordData = record;
+      name.className = "record-item-name";
+      name.textContent = menuParts.name;
+      date.className = "record-item-date";
+      date.textContent = menuParts.date;
+      item.appendChild(name);
+      if (menuParts.date) {
+        item.appendChild(date);
+      }
+      item.addEventListener("click", function () {
+        selectRecord(item, false);
+      });
+      recordsList.appendChild(item);
+    }
+
+    async function loadRecordsPage() {
+      if (recordsLoading || !recordsNextLink) {
+        return;
+      }
+
+      recordsLoading = true;
+      recordsListStatus.textContent = recordsLoaded ? "Loading more records..." : "Loading records...";
+      recordsLoadMore.disabled = true;
+
+      try {
+        const response = await fetch(recordsNextLink, {
+          headers: { "Accept": "application/json" }
+        });
+
+        if (!response.ok) {
+          let message = "HTTP " + response.status;
+
+          try {
+            const errorPayload = await response.json();
+            const apiMessage = errorPayload && errorPayload.error && errorPayload.error.message;
+
+            if (apiMessage) {
+              message += ": " + apiMessage;
+            }
+          } catch (parseError) {
+            console.debug("The records API returned a non-JSON error response.", parseError);
+          }
+
+          if (response.status === 401 || response.status === 403) {
+            message += ". Sign in with an authorized account.";
+          }
+
+          throw new Error(message);
+        }
+
+        const payload = await response.json();
+        const records = Array.isArray(payload.value) ? payload.value : [];
+        records.forEach(appendRecord);
+        recordsLoaded = true;
+        recordsNextLink = payload["@odata.nextLink"] || null;
+        const recordCount = recordsList.children.length;
+        recordsListStatus.textContent = recordCount
+          ? recordCount + (recordCount === 1 ? " record" : " records")
+          : "No submitted records found.";
+        recordsLoadMore.hidden = !recordsNextLink;
+      } catch (error) {
+        console.error("Unable to load submitted records:", error);
+        recordsListStatus.textContent = "Unable to load submitted records: " + error.message;
+        recordsLoadMore.hidden = false;
+      } finally {
+        recordsLoading = false;
+        recordsLoadMore.disabled = false;
+      }
+    }
+
+    recordsLoadMore.addEventListener("click", loadRecordsPage);
+    recordsList.addEventListener("keydown", function (event) {
+      const items = Array.from(recordsList.querySelectorAll(".record-item"));
+      const currentIndex = items.indexOf(document.activeElement);
+      let nextItem = null;
+
+      if (event.key === "ArrowDown") {
+        nextItem = items[Math.min(currentIndex + 1, items.length - 1)];
+      } else if (event.key === "ArrowUp") {
+        nextItem = items[Math.max(currentIndex - 1, 0)];
+      } else if (event.key === "Home") {
+        nextItem = items[0];
+      } else if (event.key === "End") {
+        nextItem = items[items.length - 1];
+      } else if ((event.key === "Enter" || event.key === " ") && document.activeElement.classList.contains("record-item")) {
+        selectRecord(document.activeElement, true);
+        event.preventDefault();
+        return;
+      } else {
+        return;
+      }
+
+      if (nextItem) {
+        event.preventDefault();
+        nextItem.focus();
+      }
+    });
+
+    // The tree continues to work even if the PDF.js CDN is unavailable.
+    const pdfJsAvailable = typeof pdfjsLib !== "undefined";
+
+    if (pdfJsAvailable) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+
+    // Known prefixes used to group extracted fields.
+    const groupDefinitions = [
+      { prefix: "Application", label: "Application" },
+      { prefix: "Policyholder", label: "Policyholder" },
+      { prefix: "Employer", label: "Employer" },
+      { prefix: "Insurance", label: "Insurance" },
+      { prefix: "Agreement", label: "Agreement" }
+    ];
+
+    // Converts technical property names into readable labels.
+    function titleCase(value) {
+      return value
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
+        .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+        .replace(/\bId\b/g, "ID")
+        .replace(/\bSs(n|Number)\b/gi, "SSN")
+        .trim();
+    }
+
+    // Finds the field's typed value and converts it to display text.
+    function getFieldValue(field) {
+      const valueKey = Object.keys(field || {}).find(function (key) {
+        return key.indexOf("value") === 0;
+      });
+
+      if (!valueKey || field[valueKey] === null || field[valueKey] === undefined || field[valueKey] === "") {
+        return null;
+      }
+
+      const value = field[valueKey];
+
+      if (valueKey === "valueBoolean") {
+        return value ? "Yes" : "No";
+      }
+
+      if (valueKey === "valueDate" && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+        const parts = value.split("-");
+        return parts[1] + "/" + parts[2] + "/" + parts[0];
+      }
+
+      return String(value);
+    }
+
+    // Determines the tree section based on the extracted property name.
+    function getGroupInfo(fieldName) {
+      const householdMatch = fieldName.match(/^Household(\d+)(st|nd|rd|th)Person(.*)$/);
+
+      if (householdMatch) {
+        const ordinal = householdMatch[1] === "1" ? "1st" : householdMatch[1] === "2" ? "2nd" : householdMatch[1] === "3" ? "3rd" : householdMatch[1] + "th";
+
+        return {
+          key: "Household" + householdMatch[1],
+          label: "Household " + ordinal + " Person",
+          fieldLabel: householdMatch[3]
+        };
+      }
+
+      const definition = groupDefinitions.find(function (group) {
+        return fieldName.indexOf(group.prefix) === 0;
+      });
+
+      if (definition) {
+        return {
+          key: definition.prefix,
+          label: definition.label,
+          fieldLabel: fieldName.slice(definition.prefix.length)
+        };
+      }
+
+      return {
+        key: "Other",
+        label: "Other",
+        fieldLabel: fieldName
+      };
+    }
+
+    // Deserializes normal JSON or JSON that was serialized twice.
+    function parseExtractedJson(jsonText) {
+      const parsed = JSON.parse(jsonText);
+
+      return {
+        value: typeof parsed === "string" ? JSON.parse(parsed) : parsed,
+        serializedTwice: typeof parsed === "string"
+      };
+    }
+
+    // Applies the same serialization level originally used by Dataverse.
+    function serializeExtractedJson(payload) {
+      const serialized = JSON.stringify(payload.value);
+      return payload.serializedTwice ? JSON.stringify(serialized) : serialized;
+    }
+
+    // Prepares extracted fields for rendering and discards fields without values.
+    function parseFields(jsonText) {
+      if (!jsonText) {
+        return [];
+      }
+
+      const payload = parseExtractedJson(jsonText);
+      const record = Array.isArray(payload.value) ? payload.value[0] : payload.value;
+      const fields = record && record.fields;
+
+      if (!fields || typeof fields !== "object") {
+        return [];
+      }
+
+      return Object.keys(fields).map(function (fieldName) {
+        const field = fields[fieldName] || {};
+
+        if (typeof field.confidence !== "number" || field.confidence >= 0.8) {
+          return null;
+        }
+
+        const value = getFieldValue(field);
+
+        if (value === null) {
+          return null;
+        }
+
+        const group = getGroupInfo(fieldName);
+
+        return {
+          fieldName: fieldName,
+          groupKey: group.key,
+          groupLabel: group.label,
+          label: titleCase(group.fieldLabel),
+          value: value,
+          valueKey: Object.keys(field).find(function (key) {
+            return key.indexOf("value") === 0;
+          }),
+          fieldType: field.type || "string",
+          confidence: typeof field.confidence === "number" ? Math.round(field.confidence * 100) + "%" : "",
+          source: field.source || ""
+        };
+      }).filter(Boolean);
+    }
+
+    // Converts GitHub blob links to the raw endpoint supported by fetch.
+    function normalizePdfUrl(url) {
+      const value = (url || "").trim();
+      const githubMatch = value.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)$/i);
+
+      if (githubMatch) {
+        return "https://raw.githubusercontent.com/" + githubMatch[1] + "/" + githubMatch[2] + "/" + githubMatch[3] + "/" + githubMatch[4];
+      }
+
+      return value;
+    }
+
+    // Creates a reusable ARIA item for documents, groups, and fields.
+    function createTreeItem(label, level, hasChildren) {
+      const item = document.createElement("div");
+      item.className = "pdf-treeitem";
+      item.setAttribute("role", "treeitem");
+      item.setAttribute("aria-level", String(level));
+      item.tabIndex = -1;
+      item.dataset.hasChildren = hasChildren ? "true" : "false";
+
+      const labelElement = document.createElement("span");
+      labelElement.className = "pdf-treeitem-label";
+      labelElement.textContent = label;
+      item.appendChild(labelElement);
+
+      return item;
+    }
+
+    // Creates a collapsed group and its editable field inputs.
+    function createGroup(group, fields, pdfUrl, recordId, level) {
+      const item = createTreeItem(group.label, level, true);
+      const children = document.createElement("div");
+      children.className = "pdf-treeitem-group";
+      children.setAttribute("role", "group");
+      children.hidden = true;
+      item.dataset.expanded = "false";
+      item.setAttribute("aria-expanded", "false");
+
+      fields.forEach(function (field) {
+        const leaf = createTreeItem(field.label, level + 1, false);
+        leaf.classList.add("pdf-link");
+        leaf.dataset.pdfUrl = pdfUrl;
+        leaf.dataset.recordId = recordId;
+        leaf.dataset.fieldName = field.fieldName;
+        leaf.dataset.valueKey = field.valueKey;
+        leaf.dataset.fieldType = field.fieldType;
+        leaf.dataset.originalValue = field.value;
+        leaf.dataset.highlightText = field.value;
+        leaf.dataset.source = field.source;
+
+        const editor = document.createElement("span");
+        editor.className = "pdf-treeitem-editor";
+
+        const input = document.createElement("input");
+        input.className = "pdf-treeitem-input";
+        input.type = "text";
+        input.value = field.value;
+        input.setAttribute("aria-label", field.label);
+        input.addEventListener("click", function (event) {
+          event.stopPropagation();
+        });
+        input.addEventListener("keydown", function (event) {
+          event.stopPropagation();
+        });
+        editor.appendChild(input);
+
+        const saveButton = document.createElement("button");
+        saveButton.className = "pdf-treeitem-save";
+        saveButton.type = "button";
+        saveButton.hidden = true;
+        saveButton.title = "Save changes";
+        saveButton.setAttribute("aria-label", "Save " + field.label);
+        saveButton.textContent = "\uD83D\uDCBE";
+        editor.appendChild(saveButton);
+
+        if (field.confidence) {
+          const confidence = document.createElement("span");
+          confidence.className = "confidence";
+          confidence.textContent = field.confidence;
+          editor.appendChild(confidence);
+        }
+
+        leaf.appendChild(editor);
+
+        children.appendChild(leaf);
+      });
+
+      item.appendChild(children);
+      return item;
+    }
+
+    // Converts each Liquid placeholder into a document field tree.
+    function renderDocumentTree(documentElement) {
+      const pdfUrl = normalizePdfUrl(documentElement.dataset.pdfUrl) || (
+        documentElement.dataset.pdfId
+          ? "/_api/cr417_annotatedpdfs(" + encodeURIComponent(documentElement.dataset.pdfId) + ")/cr417_pdffile/$value"
+          : ""
+      );
+      let fields;
+
+      try {
+        fields = parseFields(documentElement.dataset.extractedJson);
+      } catch (error) {
+        console.error("Invalid extracted JSON:", error);
+        documentElement.textContent = "Unable to read extracted fields.";
+        documentElement.className = "tree-empty";
+        return;
+      }
+
+      if (!fields.length) {
+        documentElement.textContent = "No extracted fields available.";
+        documentElement.className = "tree-empty";
+        return;
+      }
+
+      const fileName = documentElement.dataset.pdfName || (pdfUrl ? decodeURIComponent(pdfUrl.split("/").pop()) : "Document");
+      const documentItem = createTreeItem(fileName, 1, true);
+      const documentGroup = document.createElement("div");
+      documentGroup.className = "pdf-treeitem-group";
+      documentGroup.setAttribute("role", "group");
+      documentGroup.hidden = true;
+      documentItem.dataset.expanded = "false";
+      documentItem.setAttribute("aria-expanded", "false");
+      documentItem.classList.add("pdf-document-treeitem");
+
+      const documentIcon = document.createElement("span");
+      documentIcon.className = "pdf-document-icon fa-solid fa-file-lines";
+      documentIcon.setAttribute("aria-hidden", "true");
+      documentItem.querySelector(":scope > .pdf-treeitem-label").prepend(documentIcon);
+
+      const groups = [];
+      fields.forEach(function (field) {
+        let group = groups.find(function (entry) {
+          return entry.key === field.groupKey;
+        });
+
+        if (!group) {
+          group = { key: field.groupKey, label: field.groupLabel, fields: [] };
+          groups.push(group);
+        }
+
+        group.fields.push(field);
+      });
+
+      groups.forEach(function (group) {
+        documentGroup.appendChild(createGroup(group, group.fields, pdfUrl, documentElement.dataset.pdfId, 2));
+      });
+
+      documentItem.appendChild(documentGroup);
+      documentElement.removeAttribute("role");
+      documentElement.removeAttribute("aria-level");
+      documentElement.removeAttribute("aria-expanded");
+      documentElement.replaceChildren(documentItem);
+    }
+
+    // Returns only the visible nodes for keyboard navigation.
+    function getVisibleItems() {
+      return Array.from(tree.querySelectorAll('[role="treeitem"]')).filter(function (item) {
+        return !item.closest('[role="group"][hidden]');
+      });
+    }
+
+    // Implements roving focus: only one tree item is focusable at a time.
+    function setFocus(item) {
+      if (!item) {
+        return;
+      }
+
+      tree.querySelectorAll('[role="treeitem"]').forEach(function (otherItem) {
+        otherItem.tabIndex = otherItem === item ? 0 : -1;
+      });
+      item.focus();
+    }
+
+    // Gets the token required by Power Pages for write requests.
+    function getRequestVerificationToken() {
+      if (window.shell && typeof window.shell.getTokenDeferred === "function") {
+        return new Promise(function (resolve, reject) {
+          window.shell.getTokenDeferred().done(resolve).fail(reject);
+        });
+      }
+
+      const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+      return Promise.resolve(tokenElement ? tokenElement.value : "");
+    }
+
+    // Converts edited text back to the type stored in the JSON.
+    function getEditedValue(input, fieldType) {
+      const value = input.value.trim();
+
+      if (fieldType === "boolean") {
+        return /^(true|yes|1)$/i.test(value);
+      }
+
+      if (fieldType === "integer") {
+        return value === "" ? null : Number.parseInt(value, 10);
+      }
+
+      if (fieldType === "date") {
+        const dateMatch = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        return dateMatch ? dateMatch[3] + "-" + dateMatch[1] + "-" + dateMatch[2] : value;
+      }
+
+      return value;
+    }
+
+    // Updates only the edited field and persists the JSON to the Dataverse record.
+    async function saveField(item, input, saveButton) {
+      const recordId = item.dataset.recordId;
+      const root = item.closest(".pdf-tree");
+      const oldValue = item.dataset.originalValue;
+
+      if (!recordId || !root) {
+        throw new Error("The document record is unavailable.");
+      }
+
+      const payload = parseExtractedJson(root.dataset.extractedJson);
+      const record = Array.isArray(payload.value) ? payload.value[0] : payload.value;
+      const field = record && record.fields && record.fields[item.dataset.fieldName];
+
+      if (!field || !item.dataset.valueKey) {
+        throw new Error("The selected field is unavailable.");
+      }
+
+      const editedValue = getEditedValue(input, item.dataset.fieldType);
+
+      if (item.dataset.fieldType === "integer" && editedValue !== null && Number.isNaN(editedValue)) {
+        throw new Error("Enter a valid integer.");
+      }
+
+      field[item.dataset.valueKey] = editedValue;
+      const jsonValue = serializeExtractedJson(payload);
+      const token = await getRequestVerificationToken();
+      const response = await fetch("/_api/cr417_annotatedpdfs(" + encodeURIComponent(recordId) + ")", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "If-Match": "*",
+          "__RequestVerificationToken": token
+        },
+        body: JSON.stringify({ cr417_extractedjson: jsonValue })
+      });
+
+      if (!response.ok) {
+        throw new Error("HTTP " + response.status);
+      }
+
+      root.dataset.extractedJson = jsonValue;
+      item.dataset.originalValue = input.value;
+      item.dataset.highlightText = input.value;
+      saveButton.hidden = true;
+      statusElement.style.display = "block";
+      statusElement.textContent = "Field saved.";
+      showSaveConfirmation(oldValue, input.value);
+    }
+
+    // Displays confirmation with the values before and after saving.
+    function showSaveConfirmation(oldValue, newValue) {
+      const dialog = document.getElementById("fieldSaveDialog");
+      const message = document.getElementById("fieldSaveDialogMessage");
+      const confirmation = "Old value: " + oldValue + " / New value: " + newValue;
+
+      message.textContent = confirmation;
+
+      if (typeof dialog.showModal === "function") {
+        dialog.showModal();
+      } else {
+        window.alert(confirmation);
+      }
+    }
+
+    // Synchronizes the group's visual expansion with aria-expanded.
+    function toggleItem(item, expanded) {
+      const group = item.querySelector(':scope > [role="group"]');
+
+      if (!group) {
+        return;
+      }
+
+      const nextExpanded = expanded === undefined ? item.getAttribute("aria-expanded") !== "true" : expanded;
+
+      if (nextExpanded && item.classList.contains("pdf-document-treeitem")) {
+        tree.querySelectorAll(".pdf-document-treeitem").forEach(function (documentItem) {
+          if (documentItem !== item) {
+            toggleItem(documentItem, false);
+          }
+        });
+      }
+
+      item.setAttribute("aria-expanded", String(nextExpanded));
+      item.dataset.expanded = String(nextExpanded);
+      group.hidden = !nextExpanded;
+
+      if (nextExpanded) {
+        const firstChild = group.querySelector('[role="treeitem"]');
+
+        if (firstChild) {
+          setFocus(firstChild);
+        }
+      }
+    }
+
+    // Selects a field or toggles a group; leaves load the corresponding PDF.
+    function selectLeaf(item) {
+      if (item.dataset.hasChildren === "true") {
+        toggleItem(item);
+        return;
+      }
+
+      if (!item.dataset.pdfUrl || !item.dataset.pdfUrl.trim()) {
+        statusElement.style.display = "block";
+        statusElement.textContent = "This document has no SharePoint URL.";
+        viewer.innerHTML = "";
+        setFocus(item);
+        return;
+      }
+
+      if (selectedItem) {
+        selectedItem.removeAttribute("aria-selected");
+        selectedItem.classList.remove("active");
+      }
+
+      selectedItem = item;
+      selectedItem.setAttribute("aria-selected", "true");
+      selectedItem.classList.add("active");
+      setFocus(selectedItem);
+      loadPdf(item.dataset.pdfUrl, {
+        text: item.dataset.highlightText,
+        polygons: parseSourcePolygons(item.dataset.source)
+      });
+    }
+
+    // Implements the standard keyboard navigation keys for an ARIA tree.
+    function handleTreeKeydown(event) {
+      const item = event.target.closest('[role="treeitem"]');
+
+      if (!item) {
+        return;
+      }
+
+      const visibleItems = getVisibleItems();
+      const index = visibleItems.indexOf(item);
+      let nextItem = null;
+
+      if (event.key === "ArrowDown") {
+        nextItem = visibleItems[index + 1];
+      } else if (event.key === "ArrowUp") {
+        nextItem = visibleItems[index - 1];
+      } else if (event.key === "Home") {
+        nextItem = visibleItems[0];
+      } else if (event.key === "End") {
+        nextItem = visibleItems[visibleItems.length - 1];
+      } else if (event.key === "ArrowRight" && item.dataset.hasChildren === "true") {
+        if (item.getAttribute("aria-expanded") !== "true") {
+          toggleItem(item, true);
+        } else {
+          nextItem = item.querySelector('[role="treeitem"]');
+        }
+      } else if (event.key === "ArrowLeft") {
+        if (item.dataset.hasChildren === "true" && item.getAttribute("aria-expanded") === "true") {
+          toggleItem(item, false);
+        } else {
+          const parentGroup = item.parentElement.closest('[role="treeitem"]');
+          nextItem = parentGroup;
+        }
+      } else if (event.key === "Enter" || event.key === " ") {
+        selectLeaf(item);
+      } else {
+        return;
+      }
+
+      event.preventDefault();
+      setFocus(nextItem || item);
+    }
+
+    // Hydrates the documents, registers editors, and connects tree events.
+    tree.querySelectorAll(".pdf-tree").forEach(renderDocumentTree);
+    tree.querySelectorAll(".pdf-treeitem-input").forEach(function (input) {
+      input.addEventListener("input", function () {
+        const item = input.closest('[role="treeitem"]');
+        const saveButton = item && item.querySelector(".pdf-treeitem-save");
+
+        if (saveButton) {
+          saveButton.hidden = input.value === item.dataset.originalValue;
+        }
+      });
+    });
+    tree.querySelectorAll(".pdf-treeitem-save").forEach(function (saveButton) {
+      saveButton.addEventListener("click", async function (event) {
+        event.stopPropagation();
+
+        const item = saveButton.closest('[role="treeitem"]');
+        const input = item && item.querySelector(".pdf-treeitem-input");
+
+        if (!item || !input) {
+          return;
+        }
+
+        saveButton.disabled = true;
+
+        try {
+          await saveField(item, input, saveButton);
+        } catch (error) {
+          console.error("Error saving extracted field:", error);
+          statusElement.style.display = "block";
+          statusElement.textContent = "Unable to save field: " + error.message;
+        } finally {
+          saveButton.disabled = false;
+        }
+      });
+    });
+    tree.addEventListener("click", function (event) {
+      const item = event.target.closest('[role="treeitem"]');
+
+      if (item) {
+        selectLeaf(item);
+      }
+    });
+    tree.addEventListener("keydown", handleTreeKeydown);
+
+    const firstItem = getVisibleItems()[0];
+    setFocus(firstItem);
+
+    // Normalizes accents and spaces so PDF highlighting is tolerant.
+    function normalizeText(value) {
+      return (value || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+    }
+
+    // Converts D(p,x1,y1,...,x4,y4) geometry into polygons by page.
+    function parseSourcePolygons(source) {
+      const polygons = [];
+      const sourceText = (source || "").trim();
+      const commandPattern = /D\s*\(\s*([^)]*)\)/gi;
+      let match;
+
+      while ((match = commandPattern.exec(sourceText)) !== null) {
+        const values = match[1].split(",").map(function (value) {
+          return Number(value.trim());
+        });
+
+        if (values.length !== 9 || !Number.isInteger(values[0]) || values[0] < 1) {
+          continue;
+        }
+
+        const points = [];
+        let valid = true;
+
+        for (let index = 1; index < values.length; index += 2) {
+          if (!Number.isFinite(values[index]) || !Number.isFinite(values[index + 1])) {
+            valid = false;
+            break;
+          }
+
+          points.push({
+            x: values[index],
+            y: values[index + 1]
+          });
+        }
+
+        if (valid && points.length === 4) {
+          polygons.push({
+            pageNumber: values[0],
+            points: points
+          });
+        }
+      }
+
+      return polygons;
+    }
+
+    // Converts inches with a top-origin coordinate system to the PDF.js CSS viewport.
+    function convertSourcePolygon(page, viewport, polygon) {
+      const viewBox = viewport.viewBox;
+
+      if (!viewBox || viewBox.length < 4) {
+        return "";
+      }
+
+      const pageHeight = viewBox[3] - viewBox[1];
+
+      return polygon.points.map(function (point) {
+        const xPdf = viewBox[0] + point.x * 72;
+        const yPdf = viewBox[1] + pageHeight - point.y * 72;
+        const viewportPoint = viewport.convertToViewportPoint(xPdf, yPdf);
+
+        return viewportPoint[0] + "," + viewportPoint[1];
+      }).join(" ");
+    }
+
+    // Draws the field polygons over the corresponding page.
+    function renderPolygonHighlights(page, viewport, pageContainer, polygons) {
+      if (!polygons.length) {
+        return;
+      }
+
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.classList.add("pdf-polygon-layer");
+      svg.setAttribute("width", String(viewport.width));
+      svg.setAttribute("height", String(viewport.height));
+      svg.setAttribute("viewBox", "0 0 " + viewport.width + " " + viewport.height);
+
+      polygons.forEach(function (polygon) {
+        const points = convertSourcePolygon(page, viewport, polygon);
+
+        if (!points) {
+          return;
+        }
+
+        const element = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+        element.classList.add("pdf-polygon-highlight", "pdf-highlight");
+        element.setAttribute("points", points);
+        element.setAttribute("aria-hidden", "true");
+        svg.appendChild(element);
+      });
+
+      pageContainer.appendChild(svg);
+    }
+
+    // Marks text layer sections that match the selected value.
+    function highlightText(textLayer, searchText) {
+      const normalizedSearch = normalizeText(searchText);
+
+      if (!normalizedSearch) {
+        return;
+      }
+
+      textLayer.querySelectorAll("span").forEach(function (span) {
+        const normalizedValue = normalizeText(span.textContent);
+
+        if (
+          normalizedValue &&
+          normalizedValue.includes(normalizedSearch)
+        ) {
+          span.classList.add("pdf-highlight");
+        }
+      });
+    }
+
+    // Renders a PDF page and adds its text layer to the viewer.
+    async function renderPage(page, highlightSpec) {
+      const scale = 1.5;
+      const viewport = page.getViewport({ scale: scale });
+      const outputScale = window.devicePixelRatio || 1;
+
+      const pageContainer = document.createElement("div");
+      pageContainer.className = "pdf-page";
+      pageContainer.style.width = viewport.width + "px";
+      pageContainer.style.height = viewport.height + "px";
+
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+
+      canvas.width = Math.floor(viewport.width * outputScale);
+      canvas.height = Math.floor(viewport.height * outputScale);
+      canvas.style.width = viewport.width + "px";
+      canvas.style.height = viewport.height + "px";
+
+      const textLayer = document.createElement("div");
+      textLayer.className = "textLayer";
+      textLayer.style.width = viewport.width + "px";
+      textLayer.style.height = viewport.height + "px";
+      textLayer.style.setProperty("--scale-factor", scale);
+
+      pageContainer.appendChild(canvas);
+      pageContainer.appendChild(textLayer);
+      viewer.appendChild(pageContainer);
+
+      const transform =
+        outputScale !== 1
+          ? [outputScale, 0, 0, outputScale, 0, 0]
+          : null;
+
+      await page.render({
+        canvasContext: context,
+        viewport: viewport,
+        transform: transform
+      }).promise;
+
+      const textContent = await page.getTextContent();
+
+      const textTask = pdfjsLib.renderTextLayer({
+        textContentSource: textContent,
+        container: textLayer,
+        viewport: viewport,
+        textDivs: []
+      });
+
+      if (textTask && textTask.promise) {
+        await textTask.promise;
+      }
+
+      const pagePolygons = highlightSpec.polygons.filter(function (polygon) {
+        return polygon.pageNumber === page.pageNumber;
+      });
+
+      renderPolygonHighlights(page, viewport, pageContainer, pagePolygons);
+
+      if (!highlightSpec.polygons.length) {
+        highlightText(textLayer, highlightSpec.text);
+      }
+    }
+
+    // Downloads the PDF, renders all pages, and scrolls to the first highlight.
+    async function loadPdf(pdfUrl, highlightSpec) {
+      viewer.innerHTML = "";
+
+      statusElement.style.display = "block";
+
+      if (!pdfJsAvailable) {
+        statusElement.textContent = "Erro: PDF.js failed to load.";
+        return;
+      }
+
+      statusElement.textContent = "Loading document...";
+
+      try {
+        if (!pdfUrl) {
+          throw new Error("PDF URL is empty.");
+        }
+
+        const response = await fetch(pdfUrl);
+
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+        }
+
+        const pdfBytes = await response.arrayBuffer();
+
+        const loadingTask = pdfjsLib.getDocument({
+          data: new Uint8Array(pdfBytes)
+        });
+
+        const pdfDocument = await loadingTask.promise;
+
+        statusElement.textContent =
+          "Rendering " +
+          pdfDocument.numPages +
+          " page(s)...";
+
+        for (
+          let pageNumber = 1;
+          pageNumber <= pdfDocument.numPages;
+          pageNumber++
+        ) {
+          const page = await pdfDocument.getPage(pageNumber);
+          await renderPage(page, highlightSpec);
+        }
+
+        statusElement.style.display = "none";
+
+        const firstHighlight =
+          viewer.querySelector(".pdf-highlight");
+
+        if (firstHighlight) {
+          firstHighlight.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+          });
+        }
+
+      } catch (error) {
+        console.error("Erro while loading the PDF:", error);
+
+        statusElement.style.display = "block";
+        statusElement.textContent =
+          "Failed to load the PDF: " + error.message;
+      }
+    }
+
+    const firstLeaf = tree.querySelector('.pdf-link[role="treeitem"]');
+
+    if (firstLeaf) {
+      selectLeaf(firstLeaf);
+    } else {
+      statusElement.textContent =
+        "Document not found.";
+    }
+
+  });
+</script>
+<div class="row sectionBlockLayout text-start" style="display: flex; flex-wrap: wrap; margin: 0px; min-height: auto; padding: 8px;">
+  <div class="container" style="padding: 0px; display: flex; flex-wrap: wrap;"><div class="col-lg-12 columnBlockLayout" style="flex-grow: 1; display: flex; flex-direction: column; min-width: 250px;"></div></div>
+</div>

@@ -1,0 +1,31 @@
+- adx_displayimageonly: false
+  adx_displayorder: 3
+  adx_displaypagechildlinks: false
+  adx_name: Add Record
+  adx_openinnewwindow: false
+  adx_pageid: a4280b7b-55a5-aa58-8e95-134503b5cb20
+  adx_publishingstateid: 7d4226c9-45e5-482d-9e6d-1a4ec50a3895
+  adx_robotsfollowlink: true
+  adx_weblinkid: 30a75784-1652-5fe9-d371-00f3d06ccda0
+  adx_weblinksetid: 37821c0e-0ac0-4ca4-9f4a-d00a8652520b
+- adx_displayimageonly: false
+  adx_displayorder: 2
+  adx_displaypagechildlinks: false
+  adx_name: View Document
+  adx_openinnewwindow: false
+  adx_pageid: b2cf60bc-5eba-ac1c-26d6-91cdce05cf70
+  adx_publishingstateid: 7d4226c9-45e5-482d-9e6d-1a4ec50a3895
+  adx_robotsfollowlink: true
+  adx_weblinkid: 7bf26936-115c-6c6a-1123-4f02e564b196
+  adx_weblinksetid: 37821c0e-0ac0-4ca4-9f4a-d00a8652520b
+- adx_disablepagevalidation: false
+  adx_displayimageonly: false
+  adx_displayorder: 1
+  adx_displaypagechildlinks: false
+  adx_name: Home
+  adx_openinnewwindow: false
+  adx_pageid: 633822c6-4541-4d89-be6b-af251e0daabd
+  adx_publishingstateid: 7d4226c9-45e5-482d-9e6d-1a4ec50a3895
+  adx_robotsfollowlink: true
+  adx_weblinkid: b0612f3a-6d15-494a-ad44-39732bf1b631
+  adx_weblinksetid: 37821c0e-0ac0-4ca4-9f4a-d00a8652520b
